@@ -1,0 +1,33 @@
+{
+    "characters": [
+        {
+            "id": "1",
+            "name": "Dexter Morgan",
+            "description": "El protagonista de la serie, un analista forense y asesino en serie.",
+            "image": "images\\1_DEXTER.jpg",
+            "actor": "Michael C. Hall"
+        },
+        {
+            "id": "2",
+            "name": "Debra Morgan",
+            "description": "Hermana adoptiva de Dexter y detective de la policía de Miami.",
+            "image": "images\\2_debra.jpg",
+            "actor": "Jennifer Carpenter"
+        },
+        {
+            "id": "d7a7b043-cffc-4bc8-8731-1c50a642b4bf",
+            "name": "Brian Moser",
+            "description": "Es el primer antagonista principal de la serie y uno de los amantes de Debra Morgan.",
+            "actor": "Christian Camargo",
+            "image": "images\\d7a7b043-cffc-4bc8-8731-1c50a642b4bf_brian_moser.jpeg"
+        },
+        {
+            "id": "e361a80d-33cd-454f-b86d-efc07c3d223b",
+            "name": "James Doakes ",
+            "description": "Es un sargento tenaz del Departamento de Homicidios de Miami Metro, conocido por su actitud seria y su aguda intuición para detectar el peligro.",
+            "actor": "Erik King",
+            "image": "images\\e361a80d-33cd-454f-b86d-efc07c3d223b_doakes.jpg"
+        }
+    ],
+    "seasons": []
+}

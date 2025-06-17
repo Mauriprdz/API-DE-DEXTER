@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dexter API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+</head>
+<body>
+    <div id="notification-container"></div>
+    
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-dna"></i> Dexter API</h1>
+            <p>MAURICIO ALEJANDRO PRIETO RODRIGUEZ</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="character-form" class="form-section">
+            <h2><i class="fas fa-user-plus"></i> Agregar/Editar Personaje</h2>
+            <form id="add-character-form">
+                <input type="hidden" id="character-id">
+                <div class="form-group">
+                    <label for="name"><i class="fas fa-user"></i> Nombre:</label>
+                    <input type="text" id="name" name="name" required placeholder="Nombre del personaje">
+                </div>
+                <div class="form-group">
+                    <label for="actor"><i class="fas fa-theater-masks"></i> Actor:</label>
+                    <input type="text" id="actor" name="actor" required placeholder="Actor que interpreta al personaje">
+                </div>
+                <div class="form-group">
+                    <label for="description"><i class="fas fa-align-left"></i> Descripción:</label>
+                    <textarea id="description" name="description" rows="4" required placeholder="Describe al personaje..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="image"><i class="fas fa-image"></i> Imagen:</label>
+                    <input type="file" id="image" name="image" accept="image/*">
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar Personaje</button>
+                    <button type="button" id="cancel-edit" class="btn-secondary" style="display: none;"><i class="fas fa-times"></i> Cancelar</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="characters-list">
+            <h2><i class="fas fa-users"></i> Personajes</h2>
+            <div id="characters-grid" class="characters-grid">
+                <!-- Los personajes se cargarán aquí dinámicamente -->
+                <div class="loading">Cargando personajes...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p><i class="fas fa-code"></i> Dexter API de MAURICIO ALEJANDRO PRIETO RODRIGUEZ &copy; 2025</p>
+            
+            </div>
+        </div>
+    </footer>
+
+    <!-- Template para tarjetas de personajes -->
+    <template id="character-card-template">
+        <div class="character-card">
+            <div class="character-image-container">
+                <img class="character-image" src="" alt="">
+            </div>
+            <div class="character-info">
+                <h3 class="character-name"></h3>
+                <p class="character-actor"></p>
+                <p class="character-description"></p>
+                <div class="character-actions">
+                    <button class="btn-edit"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="btn-delete"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
