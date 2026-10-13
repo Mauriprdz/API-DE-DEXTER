@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dexter: Archivo Forense Miami Metro | Portal de APIs</title>
+  <meta name="description" content="Plataforma de investigación y catálogo forense de la serie Dexter. Consumo de TVMaze API, Wikipedia REST API y Open-Meteo Weather API.">
+  
+  <!-- Tipografía Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Iconos FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Hojas de Estilo -->
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+  <!-- =====================================================================
+       1. NAVBAR (CHECKLIST 1 - REQUISITO 1)
+       Barra de navegación visible, funcional con búsqueda y badge meteorológico
+       ===================================================================== -->
+  <nav class="navbar" id="main-navbar">
+    <div class="navbar-container">
+      
+      <!-- Marca / Logo -->
+      <div class="navbar-brand" onclick="resetAllFilters()">
+        <div class="brand-badge">
+          <i class="fas fa-tint"></i>
+        </div>
+        <div class="brand-text">
+          <h1>DEXTER <span>MMPD</span></h1>
+          <p>Forensic Intelligence Portal</p>
+        </div>
+      </div>
+
+      <!-- Barra de Búsqueda Dinámica (Checklist 2 - Requisito 3) -->
+      <div class="nav-search-box">
+        <i class="fas fa-search"></i>
+        <input 
+          type="text" 
+          id="nav-search" 
+          class="nav-search-input" 
+          placeholder="Buscar personaje, actor o episodio..." 
+          autocomplete="off"
+        >
+        <button id="clear-search" class="clear-search-btn" title="Limpiar búsqueda">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Navegación por pestañas -->
+      <div class="nav-links">
+        <button class="nav-btn active" data-tab="characters">
+          <i class="fas fa-users"></i> Personajes
+        </button>
+        <button class="nav-btn" data-tab="episodes">
+          <i class="fas fa-film"></i> Episodios
+        </button>
+        <button class="nav-btn" data-tab="forensics">
+          <i class="fas fa-microscope"></i> Lab Forense
+        </button>
+        <button class="nav-btn" data-tab="favorites">
+          <i class="fas fa-star"></i> Expedientes
+        </button>
+      </div>
+
+      <!-- Badge de Clima en Vivo de Miami (Open-Meteo API) -->
+      <div class="weather-nav-badge" id="navbar-weather-badge">
+        <i class="fas fa-cloud-sun"></i> Miami: 27°C
+      </div>
+
+      <!-- Botón móvil para el sidebar -->
+      <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Abrir Filtros">
+        <i class="fas fa-bars"></i>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- =====================================================================
+       LAYOUT PRINCIPAL (SIDEBAR + MAIN CONTAINER)
+       ===================================================================== -->
+  <div class="app-layout">
+
+    <!-- ===================================================================
+         2. SIDEBAR (CHECKLIST 1 - REQUISITO 2)
+         Componente de barra lateral estructurado con filtros y estadísticas
+         =================================================================== -->
+    <aside class="sidebar" id="sidebar">
+      
+      <!-- Perfil del Agente -->
+      <div class="agent-profile-card">
+        <div class="agent-avatar">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="agent-info">
+          <h4>Mauricio Prieto</h4>
+          <p>Analista Forense · MMPD #042</p>
+          <span class="agent-badge"><i class="fas fa-circle"></i> En Servicio</span>
+        </div>
+      </div>
+
+      <!-- Filtro por Bando / Rol -->
+      <div class="sidebar-section">
+        <h4 class="sidebar-title"><i class="fas fa-filter"></i> Clasificación</h4>
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">
+            <span class="btn-label"><i class="fas fa-th-large"></i> Todos</span>
+            <span class="count-badge" id="count-all">0</span>
+          </button>
+          <button class="filter-btn" data-filter="police">
+            <span class="btn-label"><i class="fas fa-badge-sheriff"></i> Miami Metro PD</span>
+            <span class="count-badge" id="count-police">0</span>
+          </button>
+          <button class="filter-btn" data-filter="antagonist">
+            <span class="btn-label"><i class="fas fa-skull"></i> Asesinos & Casos</span>
+            <span class="count-badge" id="count-antagonists">0</span>
+          </button>
+          <button class="filter-btn" data-filter="civilian">
+            <span class="btn-label"><i class="fas fa-heart"></i> Civiles & Familia</span>
+            <span class="count-badge" id="count-civilians">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Ordenamiento -->
+      <div class="sidebar-section">
+        <h4 class="sidebar-title"><i class="fas fa-sort-amount-down"></i> Ordenar Por</h4>
+        <select id="sort-select" class="sidebar-select">
+          <option value="default">Relevancia en Serie</option>
+          <option value="name-asc">Nombre del Personaje (A-Z)</option>
+          <option value="actor-asc">Nombre del Actor (A-Z)</option>
+        </select>
+      </div>
+
+      <!-- Estadísticas en Vivo de APIs Conectadas -->
+      <div class="sidebar-section">
+        <h4 class="sidebar-title"><i class="fas fa-server"></i> Conexión a APIs</h4>
+        <div class="stats-list">
+          <div class="stat-item">
+            <span><span class="status-dot"></span>TVMaze Public API</span>
+            <strong style="color:var(--miami-green);">200 OK</strong>
+          </div>
+          <div class="stat-item">
+            <span><span class="status-dot"></span>Wikipedia REST API</span>
+            <strong style="color:var(--miami-green);">200 OK</strong>
+          </div>
+          <div class="stat-item">
+            <span><span class="status-dot"></span>Open-Meteo Weather</span>
+            <strong style="color:var(--miami-green);">200 OK</strong>
+          </div>
+          <div class="stat-item" style="border-top:1px solid var(--border-subtle); padding-top:0.4rem; margin-top:0.2rem;">
+            <span>Personajes cargados:</span>
+            <strong id="stat-chars-count">0</strong>
+          </div>
+          <div class="stat-item">
+            <span>Episodios registrados:</span>
+            <strong id="stat-episodes-count">0</strong>
+          </div>
+          <div class="stat-item">
+            <span>Expedientes guardados:</span>
+            <strong id="stat-favorites-count" style="color:var(--crimson-light);">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón para Restablecer Filtros -->
+      <button class="reset-filters-btn" onclick="resetAllFilters()">
+        <i class="fas fa-redo"></i> Restablecer Filtros
+      </button>
+
+    </aside>
+
+    <!-- ===================================================================
+         3. MAIN CONTAINER (CHECKLIST 1 - REQUISITO 3)
+         Área de contenido principal claramente definida y dinámica
+         =================================================================== -->
+    <main class="main-container" id="main-content">
+      
+      <!-- Hero Banner -->
+      <section class="hero-banner">
+        <div class="hero-badge">
+          <i class="fas fa-shield-alt"></i> Miami Metro Police Department
+        </div>
+        <h2 class="hero-title">Archivo Forense <span>Dexter Morgan</span></h2>
+        <p class="hero-subtitle">
+          Sistema integral de investigación criminal y expediente de la serie. Conexión en vivo con TVMaze, datos enciclopédicos de Wikipedia y monitoreo meteorológico de Miami vía Open-Meteo.
+        </p>
+        <div class="hero-tags">
+          <span class="hero-tag"><i class="fas fa-tv"></i> Showtime / Paramount+</span>
+          <span class="hero-tag"><i class="fas fa-star" style="color:var(--miami-gold);"></i> 8 Temporadas · 96 Episodios</span>
+          <span class="hero-tag"><i class="fas fa-award"></i> Ganadora de 4 Premios Emmy</span>
+          <span class="hero-tag"><i class="fas fa-map-marker-alt"></i> Miami, Florida</span>
+        </div>
+      </section>
+
+      <!-- Barra de Estado de Resultados -->
+      <div class="results-control-bar">
+        <div class="results-info">
+          <span class="results-count" id="results-count-text">Cargando datos...</span>
+          <span class="active-filter-indicator" id="active-filter-badge">Todos los Personajes</span>
+        </div>
+      </div>
+
+      <!-- Área de Contenido Dinámico (Grilla de tarjetas, episodios o lab) -->
+      <div id="main-content-area">
+        <!-- Renderizado dinámicamente mediante js/app.js -->
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- =====================================================================
+       4. MODAL INTERACTIVO DE EXPEDIENTE COMPLETO
+       ===================================================================== -->
+  <div class="modal-overlay" id="character-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-folder-open" style="color:var(--crimson-light);"></i> Expediente Confidencial</h3>
+        <button class="modal-close-btn" onclick="closeCharacterModal()" title="Cerrar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-image-wrap">
+          <img id="modal-char-image" src="" alt="Personaje">
+        </div>
+        <div class="modal-dossier-info">
+          <div class="dossier-row">
+            <span class="dossier-label">Número de Registro</span>
+            <span class="dossier-val" id="modal-char-id" style="color:var(--crimson-light); font-weight:700;">MMPD-CASE-01</span>
+          </div>
+          <div class="dossier-row">
+            <span class="dossier-label">Nombre del Sujeto</span>
+            <span class="dossier-val" id="modal-char-name" style="font-size:1.25rem; font-weight:800;">Nombre</span>
+          </div>
+          <div class="dossier-row">
+            <span class="dossier-label">Actor Intérprete</span>
+            <span class="dossier-val" id="modal-char-actor">Actor</span>
+          </div>
+          <div class="dossier-row">
+            <span class="dossier-label">Asignación / Rol</span>
+            <span class="dossier-val" id="modal-char-role">Rol</span>
+          </div>
+          <div class="dossier-row">
+            <span class="dossier-label">Extracto de Investigación</span>
+            <span class="dossier-val" id="modal-char-desc" style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;">Descripción</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       5. FOOTER (CHECKLIST 1 - REQUISITO 4)
+       Pie de página completo con créditos, APIs y estatus
+       ===================================================================== -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-top">
+        
+        <!-- Columna 1: Datos del Proyecto -->
+        <div class="footer-brand">
+          <h4><i class="fas fa-tint"></i> DEXTER <span>MMPD ARCHIVE</span></h4>
+          <p>
+            Aplicación web interactiva desarrollada para la materia de Consumo de APIs (Unidad 1 y 2). Conexión en tiempo real con servicios REST públicos de televisión, enciclopedia y meteorología satelital.
+          </p>
+        </div>
+
+        <!-- Columna 2: APIs Consumidas (Checklist 2 - Requisito 2) -->
+        <div class="footer-column">
+          <h5>APIs Consumidas</h5>
+          <ul>
+            <li>
+              <a href="https://www.tvmaze.com/api" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-external-link-alt"></i> TVMaze API (Cast & Eps)
+              </a>
+            </li>
+            <li>
+              <a href="https://en.wikipedia.org/api/rest_v1/" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-external-link-alt"></i> Wikipedia REST API
+              </a>
+            </li>
+            <li>
+              <a href="https://open-meteo.com" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-external-link-alt"></i> Open-Meteo Weather API
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Columna 3: Información del Estudiante -->
+        <div class="footer-column">
+          <h5>Información Académica</h5>
+          <ul>
+            <li><span style="color:var(--text-main); font-weight:600;"><i class="fas fa-user-graduate"></i> Estudiante:</span></li>
+            <li style="color:var(--crimson-light); font-weight:700;">Mauricio Alejandro Prieto Rodríguez</li>
+            <li><span><i class="fas fa-book"></i> Grado:</span> 4to Cuatrimestre</li>
+            <li><span><i class="fas fa-rocket"></i> Despliegue:</span> Vercel Cloud Platform</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Mauricio Alejandro Prieto Rodríguez · Proyecto de Consumo de APIs · Dexter Forensic Archive</p>
+        <p><i class="fas fa-shield-alt"></i> Miami Metro Homicide Unit · Datos públicos para fines educativos</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script Principal -->
+  <script src="./js/app.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template, redirect, url_for, flash
+from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, send_from_directory, send_file
 import json
 import os
 from werkzeug.utils import secure_filename
@@ -51,10 +51,20 @@ def save_data(data):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# Rutas para el frontend
+# Rutas para el frontend principal (Vercel & Local)
 @app.route('/')
 def index():
+    if os.path.exists('index.html'):
+        return send_file('index.html')
     return render_template('index.html')
+
+@app.route('/css/<path:filename>')
+def serve_css(filename):
+    return send_from_directory('css', filename)
+
+@app.route('/js/<path:filename>')
+def serve_js(filename):
+    return send_from_directory('js', filename)
 
 @app.route('/character/<character_id>')
 def character_detail(character_id):
