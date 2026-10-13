@@ -1,609 +1,628 @@
 /**
- * DEXTER MIAMI METRO FORENSIC ARCHIVE - CLIENT APPLICATION
- * Desarrollado por: Mauricio Alejandro Prieto Rodriguez
- * Consumo de APIs: TVMaze API, Wikipedia REST API, Open-Meteo Weather API
+ * DEXTER CASE FILES
+ * Author: Mauricio Alejandro Prieto Rodríguez
+ * APIs: TVMaze (cast, episodes, franchise search) · Wikipedia REST · Open-Meteo
  */
+'use strict';
 
-// Estado global de la aplicación
-const AppState = {
-  characters: [],
+/* ==========================================================================
+   Config
+   ========================================================================== */
+const SHOW_ID = 161;
+const API = {
+  cast: `https://api.tvmaze.com/shows/${SHOW_ID}/cast`,
+  episodes: `https://api.tvmaze.com/shows/${SHOW_ID}/episodes`,
+  show: `https://api.tvmaze.com/shows/${SHOW_ID}`,
+  searchShows: (q) => `https://api.tvmaze.com/search/shows?q=${encodeURIComponent(q)}`,
+  weather: 'https://api.open-meteo.com/v1/forecast?latitude=25.7617&longitude=-80.1918'
+    + '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,is_day'
+    + '&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto',
+  wiki: (title) => `https://en.wikipedia.org/api/rest_v1/page/summary/${title}`
+};
+
+const PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#211619"/>
+   <path d="M150 120s-48 62-48 100a48 48 0 0 0 96 0c0-38-48-100-48-100z" fill="#e11d2e" opacity=".55"/></svg>`);
+
+const CATEGORIES = {
+  police: { label: 'Miami Metro', keys: ['dexter morgan', 'debra', 'batista', 'laguerta', 'masuka', 'doakes', 'quinn', 'harry', 'matthews', 'tucci', 'jamie', 'wright', 'vogel', 'hannah mckay', 'elway', 'angel'] },
+  villain: { label: 'Killer / Villain', keys: ['brian moser', 'ice truck', 'trinity', 'arthur mitchell', 'miguel', 'prado', 'travis', 'gellar', 'lila', 'sirko', 'isaak', 'hannah', 'jordan chase', 'tony', 'lundy', 'oliver saxon', 'saxon', 'kurt', 'matthew'] },
+  family: { label: 'Family & Friends', keys: ['rita', 'astor', 'cody', 'harrison', 'lumen', 'lumen pierce', 'angela', 'hannah'] }
+};
+// Explicit overrides for ambiguous names
+const OVERRIDES = {
+  'dexter morgan': 'police', 'debra morgan': 'police', 'angel batista': 'police', 'maria laguerta': 'police',
+  'vince masuka': 'police', 'james doakes': 'police', 'joey quinn': 'police', 'harry morgan': 'family',
+  'rita bennett': 'family', 'astor bennett': 'family', 'cody bennett': 'family', 'harrison morgan': 'family',
+  'lumen pierce': 'family', 'hannah mckay': 'villain', 'brian moser': 'villain', 'arthur mitchell': 'villain',
+  'miguel prado': 'villain', 'travis marshall': 'villain', 'lila tournay': 'villain', 'lila west': 'villain',
+  'isaak sirko': 'villain', 'jordan chase': 'villain', 'george lundy': 'villain', 'frank lundy': 'police',
+  'jonah mitchell': 'family', 'stan liddy': 'police', 'louis greene': 'police', 'tom matthews': 'police',
+  'jamie batista': 'police', 'mike anderson': 'police'
+};
+
+/* ==========================================================================
+   State
+   ========================================================================== */
+const state = {
+  tab: 'cast',
+  query: '',
+  category: 'all',
+  season: 'all',
+  sort: 'default',
+  cast: [],
   episodes: [],
-  filteredCharacters: [],
-  filteredEpisodes: [],
-  favorites: JSON.parse(localStorage.getItem('dexter_favorites') || '[]'),
-  currentTab: 'characters', // 'characters' | 'episodes' | 'forensics' | 'favorites'
-  currentFilter: 'all',     // 'all' | 'police' | 'antagonist' | 'civilian'
-  currentSort: 'default',
-  currentSeason: 'all',
-  searchQuery: '',
-  mmpdWeather: null,
-  wikiDexter: null,
-  wikiForensics: null
+  show: null,
+  weather: null,
+  wiki: {},
+  universe: { query: '', items: [], loaded: false, loading: false },
+  saved: new Set(JSON.parse(localStorage.getItem('dexter_saved') || '[]')),
+  status: { tvmaze: 'loading', wiki: 'loading', meteo: 'loading' }
 };
 
-// Clasificación contextual de personajes de Dexter
-const CHARACTER_ROLES = {
-  'Dexter Morgan': { role: 'police', label: 'Forense / Asesino', badgeClass: 'badge-forensic' },
-  'Debra Morgan': { role: 'police', label: 'Detective MMPD', badgeClass: 'badge-police' },
-  'Angel Batista': { role: 'police', label: 'Sargento MMPD', badgeClass: 'badge-police' },
-  'Maria LaGuerta': { role: 'police', label: 'Teniente MMPD', badgeClass: 'badge-police' },
-  'Vince Masuka': { role: 'police', label: 'Científico Forense', badgeClass: 'badge-police' },
-  'James Doakes': { role: 'police', label: 'Sargento MMPD', badgeClass: 'badge-police' },
-  'Joey Quinn': { role: 'police', label: 'Detective MMPD', badgeClass: 'badge-police' },
-  'Harry Morgan': { role: 'police', label: 'Mentor / Código', badgeClass: 'badge-police' },
-  'Rita Bennett': { role: 'civilian', label: 'Familia', badgeClass: 'badge-civilian' },
-  'Hannah McKay': { role: 'antagonist', label: 'Envenenadora', badgeClass: 'badge-antagonist' },
-  'Arthur Mitchell': { role: 'antagonist', label: 'Trinity Killer', badgeClass: 'badge-antagonist' },
-  'Brian Moser': { role: 'antagonist', label: 'Ice Truck Killer', badgeClass: 'badge-antagonist' },
-  'Miguel Prado': { role: 'antagonist', label: 'Fiscal / Vigilante', badgeClass: 'badge-antagonist' },
-  'Travis Marshall': { role: 'antagonist', label: 'Doomsday Killer', badgeClass: 'badge-antagonist' },
-  'Lila West': { role: 'antagonist', label: 'Pirómana', badgeClass: 'badge-antagonist' },
-  'Isaak Sirko': { role: 'antagonist', label: 'Líder Koshka', badgeClass: 'badge-antagonist' }
-};
-
-// Fallback por si la red falla en el cast
-const FALLBACK_CAST = [
-  {
-    person: { name: 'Michael C. Hall', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/573/1432542.jpg' } },
-    character: { name: 'Dexter Morgan', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2226.jpg' } }
-  },
-  {
-    person: { name: 'Jennifer Carpenter', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/576/1440047.jpg' } },
-    character: { name: 'Debra Morgan', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2227.jpg' } }
-  },
-  {
-    person: { name: 'David Zayas', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/2/7038.jpg' } },
-    character: { name: 'Angel Batista', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2230.jpg' } }
-  },
-  {
-    person: { name: 'James Remar', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/157/393379.jpg' } },
-    character: { name: 'Harry Morgan', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2228.jpg' } }
-  },
-  {
-    person: { name: 'C.S. Lee', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/2/7039.jpg' } },
-    character: { name: 'Vince Masuka', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2231.jpg' } }
-  },
-  {
-    person: { name: 'Erik King', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/2/7041.jpg' } },
-    character: { name: 'James Doakes', image: { medium: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2233.jpg' } }
-  }
-];
-
-// Inicialización de la aplicación al cargar el DOM
-document.addEventListener('DOMContentLoaded', () => {
-  setupEventListeners();
-  loadAllApis();
-});
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const view = $('#view');
 
 /* ==========================================================================
-   CONSUMO DE APIS EXTERNAS (CHECKLIST 2 - REQUISITOS 2 & 5)
+   Utilities
    ========================================================================== */
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const stripHtml = (html) => html ? new DOMParser().parseFromString(html, 'text/html').body.textContent.trim() : '';
+const https = (u) => u ? u.replace(/^http:/, 'https:') : u;
+const debounce = (fn, ms = 350) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const norm = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-async function loadAllApis() {
-  renderLoadingState();
+function highlight(text) {
+  const safe = esc(text);
+  const q = state.query.trim();
+  if (!q || state.tab === 'universe') return safe;
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
+  return safe.replace(re, '<mark>$1</mark>');
+}
+
+function toast(msg, icon = 'fa-circle-check') {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<i class="fas ${icon}"></i><span>${esc(msg)}</span>`;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = 0; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 2400);
+}
+
+async function api(key, url) {
+  const t0 = performance.now();
+  setStatus(key, 'loading');
   try {
-    // 1. API 1: TVMaze API (Cast de Dexter)
-    const castPromise = fetch('https://api.tvmaze.com/shows/161/cast')
-      .then(res => res.ok ? res.json() : FALLBACK_CAST)
-      .catch(() => FALLBACK_CAST);
-
-    // 2. API 1: TVMaze API (Episodios de Dexter)
-    const episodesPromise = fetch('https://api.tvmaze.com/shows/161/episodes')
-      .then(res => res.ok ? res.json() : [])
-      .catch(() => []);
-
-    // 3. API 2: Open-Meteo Weather API (Clima en Miami Metro Police Dept)
-    const weatherPromise = fetch('https://api.open-meteo.com/v1/forecast?latitude=25.7617&longitude=-80.1918&current_weather=true')
-      .then(res => res.ok ? res.json() : null)
-      .catch(() => null);
-
-    // 4. API 3: Wikipedia REST API (Resumen Oficial de Dexter)
-    const wikiDexterPromise = fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Dexter_(TV_series)')
-      .then(res => res.ok ? res.json() : null)
-      .catch(() => null);
-
-    // 5. API 3: Wikipedia REST API (Forense de Salpicaduras de Sangre)
-    const wikiForensicsPromise = fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Bloodstain_pattern_analysis')
-      .then(res => res.ok ? res.json() : null)
-      .catch(() => null);
-
-    const [castData, episodesData, weatherData, wikiDexterData, wikiForensicsData] = await Promise.all([
-      castPromise,
-      episodesPromise,
-      weatherPromise,
-      wikiDexterPromise,
-      wikiForensicsPromise
-    ]);
-
-    // Procesar datos de Personajes
-    AppState.characters = castData.map((item, index) => {
-      const charName = item.character ? item.character.name : 'Desconocido';
-      const actorName = item.person ? item.person.name : 'Desconocido';
-      const roleMeta = CHARACTER_ROLES[charName] || { role: 'civilian', label: 'Reparto', badgeClass: 'badge-civilian' };
-      const image = (item.character && item.character.image) 
-        ? item.character.image.medium 
-        : (item.person && item.person.image ? item.person.image.medium : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400');
-
-      return {
-        id: `char-${index + 1}`,
-        name: charName,
-        actor: actorName,
-        role: roleMeta.role,
-        roleLabel: roleMeta.label,
-        badgeClass: roleMeta.badgeClass,
-        image: image,
-        details: `${charName} es interpretado por ${actorName} en el departamento de Miami Metro de la serie de drama y suspenso forense.`
-      };
-    });
-
-    AppState.episodes = episodesData;
-    AppState.mmpdWeather = weatherData;
-    AppState.wikiDexter = wikiDexterData;
-    AppState.wikiForensics = wikiForensicsData;
-
-    updateStatsAndWeatherUI();
-    applyFilters();
-  } catch (error) {
-    console.error('Error cargando APIs:', error);
-    showErrorMessage('Ocurrió un error cargando los datos de las APIs externas.');
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    setStatus(key, 'ok', Math.round(performance.now() - t0));
+    return data;
+  } catch (err) {
+    console.error(`[${key}]`, err);
+    setStatus(key, 'fail');
+    return null;
   }
+}
+
+function setStatus(key, status, ms) {
+  state.status[key] = status;
+  const li = $(`#status-list [data-api="${key}"]`);
+  if (!li) return;
+  li.className = status;
+  $('em', li).textContent = status === 'ok' ? `${ms} ms` : status === 'fail' ? 'Offline' : '…';
+}
+
+function categoryOf(name) {
+  const n = norm(name);
+  if (OVERRIDES[n]) return OVERRIDES[n];
+  for (const [cat, def] of Object.entries(CATEGORIES)) if (def.keys.some((k) => n.includes(k))) return cat;
+  return 'other';
+}
+
+const categoryLabel = (c) => ({ police: 'Miami Metro', villain: 'Killer / Villain', family: 'Family & Friends', other: 'Supporting' }[c]);
+
+/* WMO weather codes → label + icon */
+function wmo(code) {
+  if (code === 0) return ['Clear sky', 'fa-sun'];
+  if (code <= 2) return ['Partly cloudy', 'fa-cloud-sun'];
+  if (code === 3) return ['Overcast', 'fa-cloud'];
+  if (code <= 48) return ['Foggy', 'fa-smog'];
+  if (code <= 57) return ['Drizzle', 'fa-cloud-rain'];
+  if (code <= 67) return ['Rain', 'fa-cloud-showers-heavy'];
+  if (code <= 77) return ['Snow', 'fa-snowflake'];
+  if (code <= 82) return ['Rain showers', 'fa-cloud-showers-heavy'];
+  if (code <= 86) return ['Snow showers', 'fa-snowflake'];
+  return ['Thunderstorm', 'fa-bolt'];
 }
 
 /* ==========================================================================
-   ACTUALIZACIÓN DE INTERFAZ & WIDGETS
+   Data loading
    ========================================================================== */
+async function loadAll() {
+  renderSkeleton();
+  const [cast, eps, show, weather, wikiShow, wikiLab] = await Promise.all([
+    api('tvmaze', API.cast), api('tvmaze', API.episodes), api('tvmaze', API.show),
+    api('meteo', API.weather),
+    api('wiki', API.wiki('Dexter_(TV_series)')), api('wiki', API.wiki('Bloodstain_pattern_analysis'))
+  ]);
+  // TVMaze status is the worst of its three calls
+  setStatus('tvmaze', cast && eps && show ? 'ok' : 'fail', 0);
+  if (cast && eps && show) { const li = $('#status-list [data-api="tvmaze"] em'); li.textContent = 'Online'; }
+  if (wikiShow && wikiLab) $('#status-list [data-api="wiki"] em').textContent = 'Online';
+  if (weather) $('#status-list [data-api="meteo"] em').textContent = 'Online';
 
-function updateStatsAndWeatherUI() {
-  // Actualizar conteos del sidebar
-  document.getElementById('stat-chars-count').textContent = AppState.characters.length;
-  document.getElementById('stat-episodes-count').textContent = AppState.episodes.length;
-  document.getElementById('stat-favorites-count').textContent = AppState.favorites.length;
+  state.cast = (cast || []).map((c, i) => ({
+    id: `c${c.character.id}`,
+    name: c.character.name,
+    actor: c.person.name,
+    country: c.person.country?.name || '—',
+    birthday: c.person.birthday,
+    image: https(c.character.image?.original || c.character.image?.medium || c.person.image?.original || c.person.image?.medium),
+    actorImage: https(c.person.image?.medium),
+    cat: categoryOf(c.character.name),
+    order: i,
+    url: c.person.url
+  }));
+  // De-duplicate characters shown more than once in the cast list
+  const seen = new Set();
+  state.cast = state.cast.filter((c) => !seen.has(c.id) && seen.add(c.id));
 
-  // Actualizar conteos por categoría en el sidebar
-  const policeCount = AppState.characters.filter(c => c.role === 'police').length;
-  const antagCount = AppState.characters.filter(c => c.role === 'antagonist').length;
-  const civilCount = AppState.characters.filter(c => c.role === 'civilian').length;
+  state.episodes = (eps || []).map((e) => ({
+    id: `e${e.id}`, name: e.name, season: e.season, number: e.number, airdate: e.airdate,
+    runtime: e.runtime, rating: e.rating?.average, image: https(e.image?.original || e.image?.medium),
+    summary: stripHtml(e.summary), url: e.url, order: e.id
+  }));
+  state.show = show;
+  state.weather = weather;
+  state.wiki = { show: wikiShow, lab: wikiLab };
 
-  document.getElementById('count-all').textContent = AppState.characters.length;
-  document.getElementById('count-police').textContent = policeCount;
-  document.getElementById('count-antagonists').textContent = antagCount;
-  document.getElementById('count-civilians').textContent = civilCount;
+  updateStats();
+  updateWeatherChip();
+  buildSeasonFilters();
+  render();
+}
 
-  // Actualizar widget de clima en Miami (Open-Meteo)
-  if (AppState.mmpdWeather && AppState.mmpdWeather.current_weather) {
-    const temp = Math.round(AppState.mmpdWeather.current_weather.temperature);
-    const wind = AppState.mmpdWeather.current_weather.windspeed;
-    const isDay = AppState.mmpdWeather.current_weather.is_day;
-    const weatherBadge = document.getElementById('navbar-weather-badge');
-    if (weatherBadge) {
-      weatherBadge.innerHTML = `<i class="fas ${isDay ? 'fa-sun' : 'fa-moon'}"></i> Miami Metro: ${temp}°C | Viento ${wind} km/h`;
-    }
-  }
+function updateStats() {
+  const counts = { all: state.cast.length, police: 0, villain: 0, family: 0, other: 0 };
+  state.cast.forEach((c) => counts[c.cat]++);
+  Object.entries(counts).forEach(([k, v]) => { const el = $(`#cnt-${k}`); if (el) el.textContent = v; });
+
+  const rated = state.episodes.filter((e) => e.rating);
+  const avg = rated.length ? (rated.reduce((s, e) => s + e.rating, 0) / rated.length).toFixed(1) : '–';
+  const seasons = new Set(state.episodes.map((e) => e.season)).size;
+  animateCount($('[data-count="characters"]'), state.cast.length);
+  animateCount($('[data-count="episodes"]'), state.episodes.length);
+  animateCount($('[data-count="seasons"]'), seasons);
+  $('[data-count="rating"]').textContent = avg;
+  updateSavedBadge();
+}
+
+function animateCount(el, to) {
+  const start = performance.now(), dur = 900;
+  const step = (t) => {
+    const p = Math.min((t - start) / dur, 1);
+    el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function updateWeatherChip() {
+  const chip = $('#weather-chip');
+  const cur = state.weather?.current;
+  if (!cur) { chip.innerHTML = '<i class="fas fa-triangle-exclamation"></i><span>Weather offline</span>'; return; }
+  const [label, icon] = wmo(cur.weather_code);
+  chip.innerHTML = `<i class="fas ${icon}"></i><span>Miami ${Math.round(cur.temperature_2m)}°C · ${label}</span>`;
+}
+
+function buildSeasonFilters() {
+  const seasons = [...new Set(state.episodes.map((e) => e.season))].sort((a, b) => a - b);
+  $('#season-filters').innerHTML =
+    `<button class="chip active" data-season="all" style="grid-column:1/-1"><span>All seasons</span></button>` +
+    seasons.map((s) => `<button class="chip" data-season="${s}">${s}</button>`).join('');
 }
 
 /* ==========================================================================
-   FILTRADO Y BÚSQUEDA (CHECKLIST 2 - REQUISITO 3)
+   Filtering, searching, sorting
    ========================================================================== */
+function getCast(source = state.cast) {
+  const q = norm(state.query.trim());
+  let list = source.filter((c) =>
+    (state.category === 'all' || c.cat === state.category) &&
+    (!q || norm(c.name).includes(q) || norm(c.actor).includes(q) || norm(categoryLabel(c.cat)).includes(q)));
+  if (state.sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+  if (state.sort === 'actor') list = [...list].sort((a, b) => a.actor.localeCompare(b.actor));
+  return list;
+}
 
-function applyFilters() {
-  const query = AppState.searchQuery.trim().toLowerCase();
-
-  // 1. Filtrar personajes
-  AppState.filteredCharacters = AppState.characters.filter(char => {
-    const matchesSearch = !query || 
-      char.name.toLowerCase().includes(query) || 
-      char.actor.toLowerCase().includes(query) ||
-      char.roleLabel.toLowerCase().includes(query);
-
-    const matchesRole = AppState.currentFilter === 'all' || char.role === AppState.currentFilter;
-    return matchesSearch && matchesRole;
-  });
-
-  // Ordenamiento de personajes
-  if (AppState.currentSort === 'name-asc') {
-    AppState.filteredCharacters.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (AppState.currentSort === 'actor-asc') {
-    AppState.filteredCharacters.sort((a, b) => a.actor.localeCompare(b.actor));
-  }
-
-  // 2. Filtrar episodios
-  AppState.filteredEpisodes = AppState.episodes.filter(ep => {
-    const matchesSearch = !query || 
-      ep.name.toLowerCase().includes(query) || 
-      (ep.summary && ep.summary.toLowerCase().includes(query));
-
-    const matchesSeason = AppState.currentSeason === 'all' || ep.season.toString() === AppState.currentSeason;
-    return matchesSearch && matchesSeason;
-  });
-
-  renderCurrentView();
+function getEpisodes(source = state.episodes) {
+  const q = norm(state.query.trim());
+  let list = source.filter((e) =>
+    (state.season === 'all' || String(e.season) === state.season) &&
+    (!q || norm(e.name).includes(q) || norm(e.summary).includes(q)));
+  if (state.sort === 'rating') list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  if (state.sort === 'newest') list = [...list].sort((a, b) => (b.airdate || '').localeCompare(a.airdate || ''));
+  return list;
 }
 
 /* ==========================================================================
-   RENDERIZADO DE VISTAS (CHECKLIST 1 - REQUISITO 3)
+   Rendering
    ========================================================================== */
+const TITLES = { cast: 'Cast', episodes: 'Episode guide', universe: 'Franchise universe', lab: 'Forensic lab', saved: 'Saved files' };
+const PLACEHOLDERS = {
+  cast: 'Search characters or actors…', episodes: 'Search episode titles or plots…',
+  universe: 'Search any TV show on TVMaze…', lab: 'Search is disabled in the lab', saved: 'Search your saved files…'
+};
+const SORTS = {
+  cast: [['default', 'Series billing'], ['name', 'Character A–Z'], ['actor', 'Actor A–Z']],
+  episodes: [['default', 'Episode order'], ['rating', 'Top rated'], ['newest', 'Newest first']]
+};
 
-function renderCurrentView() {
-  const container = document.getElementById('main-content-area');
-  const resultsCountEl = document.getElementById('results-count-text');
-  const activeFilterBadge = document.getElementById('active-filter-badge');
-
-  if (AppState.currentTab === 'characters') {
-    activeFilterBadge.textContent = `Filtro: ${getFilterName(AppState.currentFilter)}`;
-    resultsCountEl.textContent = `${AppState.filteredCharacters.length} Personajes`;
-    renderCharactersGrid(container, AppState.filteredCharacters);
-  } else if (AppState.currentTab === 'episodes') {
-    activeFilterBadge.textContent = AppState.currentSeason === 'all' ? 'Todas las temporadas' : `Temporada ${AppState.currentSeason}`;
-    resultsCountEl.textContent = `${AppState.filteredEpisodes.length} Episodios`;
-    renderEpisodesGrid(container, AppState.filteredEpisodes);
-  } else if (AppState.currentTab === 'forensics') {
-    activeFilterBadge.textContent = 'MMPD Intelligence';
-    resultsCountEl.textContent = 'Laboratorio Forense & Clima en Vivo';
-    renderForensicsView(container);
-  } else if (AppState.currentTab === 'favorites') {
-    activeFilterBadge.textContent = 'Mis Casos Guardados';
-    const favItems = AppState.characters.filter(c => AppState.favorites.includes(c.id));
-    resultsCountEl.textContent = `${favItems.length} Expedientes`;
-    renderCharactersGrid(container, favItems, true);
+function render() {
+  // Chrome that depends on tab
+  $('#view-title').textContent = TITLES[state.tab];
+  $('#search').placeholder = PLACEHOLDERS[state.tab];
+  $('#search').disabled = state.tab === 'lab';
+  $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === state.tab));
+  $$('.side-block[data-tabs]').forEach((b) => { b.hidden = !b.dataset.tabs.split(' ').includes(state.tab); });
+  const sorts = SORTS[state.tab];
+  if (sorts) {
+    const sel = $('#sort');
+    if (!sorts.some(([v]) => v === state.sort)) state.sort = 'default';
+    sel.innerHTML = sorts.map(([v, l]) => `<option value="${v}" ${v === state.sort ? 'selected' : ''}>${l}</option>`).join('');
   }
+  renderActiveFilters();
+
+  const map = { cast: renderCast, episodes: renderEpisodes, universe: renderUniverse, lab: renderLab, saved: renderSaved };
+  map[state.tab]();
+  view.style.animation = 'none'; void view.offsetWidth; view.style.animation = '';
 }
 
-// Renderizado de tarjetas de personajes
-function renderCharactersGrid(container, list, isFavorites = false) {
-  if (list.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-search-minus"></i>
-        <h3>No se encontraron expedientes</h3>
-        <p>${AppState.searchQuery ? `No hay coincidencias para "${AppState.searchQuery}". Intenta con otro término o limpia los filtros.` : 'No hay elementos guardados en esta categoría.'}</p>
-        <button class="card-action-btn" style="max-width:200px; margin: 1rem auto;" onclick="resetAllFilters()">
-          <i class="fas fa-redo"></i> Restablecer Filtros
-        </button>
-      </div>
-    `;
+function renderActiveFilters() {
+  const tags = [];
+  if (state.query && state.tab !== 'lab') tags.push(['query', `“${state.query}”`]);
+  if (['cast', 'saved'].includes(state.tab) && state.category !== 'all') tags.push(['category', categoryLabel(state.category)]);
+  if (state.tab === 'episodes' && state.season !== 'all') tags.push(['season', `Season ${state.season}`]);
+  $('#active-filters').innerHTML = tags.map(([k, l]) =>
+    `<span class="tag">${esc(l)}<button data-clear="${k}" aria-label="Remove filter ${esc(l)}"><i class="fas fa-xmark"></i></button></span>`).join('');
+}
+
+function renderSkeleton() {
+  view.innerHTML = `<div class="grid">${'<div class="skeleton"></div>'.repeat(10)}</div>`;
+  $('#view-count').textContent = 'Loading…';
+}
+
+function emptyState(icon, title, text, withReset = true) {
+  return `<div class="empty"><i class="fas ${icon}"></i><h3>${title}</h3><p>${text}</p>
+    ${withReset ? '<button class="btn btn-primary" data-action="reset"><i class="fas fa-rotate-left"></i> Reset filters</button>' : ''}</div>`;
+}
+
+function errorState() {
+  return `<div class="empty"><i class="fas fa-plug-circle-xmark"></i><h3>Connection lost</h3>
+    <p>We couldn't reach the data providers. Check your connection and try again.</p>
+    <button class="btn btn-primary" data-action="reload"><i class="fas fa-rotate"></i> Try again</button></div>`;
+}
+
+const saveBtn = (id) => `<button class="save-btn ${state.saved.has(id) ? 'on' : ''}" data-save="${id}"
+  aria-label="${state.saved.has(id) ? 'Remove from saved' : 'Save'}" aria-pressed="${state.saved.has(id)}">
+  <i class="${state.saved.has(id) ? 'fas' : 'far'} fa-bookmark"></i></button>`;
+
+function castCard(c, i) {
+  return `<article class="card" data-open-cast="${c.id}" style="--i:${Math.min(i, 14)}" tabindex="0">
+    <div class="card-media">
+      <img src="${esc(c.image || PLACEHOLDER)}" alt="${esc(c.name)}" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+      <span class="badge ${c.cat}">${categoryLabel(c.cat)}</span>${saveBtn(c.id)}
+    </div>
+    <div class="card-body">
+      <h3 class="card-title">${highlight(c.name)}</h3>
+      <p class="card-sub"><i class="fas fa-clapperboard"></i> ${highlight(c.actor)}</p>
+    </div></article>`;
+}
+
+function episodeCard(e, i) {
+  return `<article class="card" data-open-ep="${e.id}" style="--i:${Math.min(i, 14)}" tabindex="0">
+    <div class="card-media landscape">
+      <img src="${esc(e.image || PLACEHOLDER)}" alt="${esc(e.name)}" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+      <span class="badge code">S${String(e.season).padStart(2, '0')} · E${String(e.number).padStart(2, '0')}</span>${saveBtn(e.id)}
+      ${e.rating ? `<span class="rating"><i class="fas fa-star"></i>${e.rating}</span>` : ''}
+    </div>
+    <div class="card-body">
+      <h3 class="card-title">${highlight(e.name)}</h3>
+      <p class="card-sub"><i class="far fa-calendar"></i> ${e.airdate || 'TBA'}${e.runtime ? ` · ${e.runtime} min` : ''}</p>
+      <p class="card-text">${highlight(e.summary || 'No synopsis available.')}</p>
+    </div></article>`;
+}
+
+function renderCast() {
+  if (!state.cast.length) { view.innerHTML = errorState(); $('#view-count').textContent = 'Offline'; return; }
+  const list = getCast();
+  $('#view-count').textContent = `${list.length} of ${state.cast.length} characters`;
+  view.innerHTML = list.length
+    ? `<div class="grid">${list.map(castCard).join('')}</div>`
+    : emptyState('fa-user-slash', 'No suspects found', `Nothing matches “${esc(state.query)}” in this category.`);
+}
+
+function renderEpisodes() {
+  if (!state.episodes.length) { view.innerHTML = errorState(); $('#view-count').textContent = 'Offline'; return; }
+  const list = getEpisodes();
+  $('#view-count').textContent = `${list.length} of ${state.episodes.length} episodes`;
+  view.innerHTML = list.length
+    ? `<div class="grid grid-wide">${list.map(episodeCard).join('')}</div>`
+    : emptyState('fa-film', 'No episodes found', 'Try a different keyword or season.');
+}
+
+function renderSaved() {
+  const cast = getCast(state.cast.filter((c) => state.saved.has(c.id)));
+  const eps = getEpisodes(state.episodes.filter((e) => state.saved.has(e.id)));
+  $('#view-count').textContent = `${cast.length + eps.length} saved`;
+  if (!cast.length && !eps.length) {
+    view.innerHTML = emptyState('fa-bookmark', 'No saved files yet',
+      'Tap the bookmark on any character or episode to keep it here. Your list is stored in this browser.', false);
     return;
   }
-
-  const cardsHtml = list.map(char => {
-    const isFav = AppState.favorites.includes(char.id);
-    return `
-      <div class="character-card" data-id="${char.id}">
-        <div class="card-image-wrap">
-          <img class="card-image" src="${char.image}" alt="${char.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'">
-          <span class="card-role-badge ${char.badgeClass}">${char.roleLabel}</span>
-          <button class="card-favorite-btn ${isFav ? 'favorited' : ''}" title="${isFav ? 'Quitar de expedientes' : 'Guardar en expedientes'}" onclick="toggleFavorite('${char.id}', event)">
-            <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
-          </button>
-        </div>
-        <div class="card-body">
-          <h3 class="card-character-name">${char.name}</h3>
-          <p class="card-actor-name"><i class="fas fa-user-circle"></i> ${char.actor}</p>
-          <p class="card-details">${char.details}</p>
-          <div class="card-footer">
-            <button class="card-action-btn" onclick="openCharacterModal('${char.id}')">
-              <i class="fas fa-folder-open"></i> Ver Expediente
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  container.innerHTML = `<div class="characters-grid">${cardsHtml}</div>`;
+  view.innerHTML =
+    (cast.length ? `<p class="section-label">Characters (${cast.length})</p><div class="grid">${cast.map(castCard).join('')}</div>` : '') +
+    (eps.length ? `<p class="section-label">Episodes (${eps.length})</p><div class="grid grid-wide">${eps.map(episodeCard).join('')}</div>` : '');
 }
 
-// Renderizado de episodios
-function renderEpisodesGrid(container, list) {
-  if (list.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-film"></i>
-        <h3>No se encontraron episodios</h3>
-        <p>No hay episodios que coincidan con la búsqueda actual.</p>
-      </div>
-    `;
-    return;
-  }
-
-  const episodesHtml = list.map(ep => {
-    const thumb = (ep.image && ep.image.medium) ? ep.image.medium : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400';
-    const rating = (ep.rating && ep.rating.average) ? ep.rating.average : '8.2';
-    const cleanSummary = ep.summary ? ep.summary.replace(/<[^>]*>?/gm, '') : 'Sin resumen oficial disponible para este episodio.';
-
-    return `
-      <div class="episode-card">
-        <div class="episode-thumbnail-wrap">
-          <img class="episode-thumbnail" src="${thumb}" alt="${ep.name}" loading="lazy">
-          <span class="episode-code-badge">T${ep.season} · E${ep.number}</span>
-          <span class="episode-rating-badge"><i class="fas fa-star"></i> ${rating}</span>
-        </div>
-        <div class="episode-card-body">
-          <h4 class="episode-title">${ep.name}</h4>
-          <p class="episode-airdate"><i class="far fa-calendar-alt"></i> Estreno: ${ep.airdate || '2006-2013'}</p>
-          <p class="episode-summary">${cleanSummary}</p>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  container.innerHTML = `
-    <div class="episodes-filter-bar">
-      <label for="season-select" style="font-size:0.85rem; font-weight:600;"><i class="fas fa-tv"></i> Temporada:</label>
-      <select id="season-select" class="sidebar-select" style="max-width:200px;" onchange="handleSeasonChange(this.value)">
-        <option value="all" ${AppState.currentSeason === 'all' ? 'selected' : ''}>Todas (1 a 8)</option>
-        <option value="1" ${AppState.currentSeason === '1' ? 'selected' : ''}>Temporada 1 (2006)</option>
-        <option value="2" ${AppState.currentSeason === '2' ? 'selected' : ''}>Temporada 2 (2007)</option>
-        <option value="3" ${AppState.currentSeason === '3' ? 'selected' : ''}>Temporada 3 (2008)</option>
-        <option value="4" ${AppState.currentSeason === '4' ? 'selected' : ''}>Temporada 4 (2009 - Trinity)</option>
-        <option value="5" ${AppState.currentSeason === '5' ? 'selected' : ''}>Temporada 5 (2010)</option>
-        <option value="6" ${AppState.currentSeason === '6' ? 'selected' : ''}>Temporada 6 (2011)</option>
-        <option value="7" ${AppState.currentSeason === '7' ? 'selected' : ''}>Temporada 7 (2012)</option>
-        <option value="8" ${AppState.currentSeason === '8' ? 'selected' : ''}>Temporada 8 (2013)</option>
-      </select>
-    </div>
-    <div class="episodes-grid">${episodesHtml}</div>
-  `;
+/* ----- Universe: live TVMaze search ----- */
+async function loadUniverse(query) {
+  const u = state.universe;
+  u.loading = true; u.query = query;
+  view.innerHTML = `<div class="grid">${'<div class="skeleton"></div>'.repeat(6)}</div>`;
+  const data = await api('tvmaze', API.searchShows(query || 'dexter'));
+  if (u.query !== query) return; // stale response
+  u.loading = false; u.loaded = true;
+  let items = (data || []).map((r) => r.show);
+  if (!query) items = items.filter((s) => /^dexter(:|$)/i.test(s.name)); // curated franchise view
+  u.items = items;
+  u.failed = !data;
+  if (state.tab === 'universe') renderUniverse();
 }
 
-// Renderizado de Laboratorio Forense y Clima MMPD (Open-Meteo & Wikipedia)
-function renderForensicsView(container) {
-  const weather = AppState.mmpdWeather ? AppState.mmpdWeather.current_weather : { temperature: 27, windspeed: 14, winddirection: 120 };
-  const wikiDexter = AppState.wikiDexter || { extract: 'Dexter es una aclamada serie de drama y crimen forense emitida en Showtime centrada en Dexter Morgan, analista de salpicaduras de sangre.' };
-  const wikiForensics = AppState.wikiForensics || { extract: 'El análisis de patrones de manchas de sangre es una técnica forense que busca reconstruir crímenes a partir de la física y trayectoria de fluidos.' };
-
-  container.innerHTML = `
-    <div class="forensics-view-container">
-      <!-- Panel de Clima en Vivo de Miami (Open-Meteo API) -->
-      <div class="forensic-panel">
-        <div class="forensic-panel-header">
-          <h3><i class="fas fa-cloud-sun" style="color:var(--miami-teal);"></i> Clima en Miami Metro HQ</h3>
-          <span class="api-pill">Open-Meteo API</span>
-        </div>
-        <p style="font-size:0.85rem; color:var(--text-muted);">
-          Condiciones meteorológicas en tiempo real de la estación de policía de Miami Metro (Lat 25.76°N, Long 80.19°W).
-        </p>
-        <div class="weather-stats-grid">
-          <div class="weather-stat-box">
-            <div class="weather-stat-icon"><i class="fas fa-temperature-high"></i></div>
-            <div class="weather-stat-info">
-              <h5>Temperatura</h5>
-              <p>${Math.round(weather.temperature)}°C</p>
-            </div>
-          </div>
-          <div class="weather-stat-box">
-            <div class="weather-stat-icon"><i class="fas fa-wind"></i></div>
-            <div class="weather-stat-info">
-              <h5>Velocidad Viento</h5>
-              <p>${weather.windspeed} km/h</p>
-            </div>
-          </div>
-          <div class="weather-stat-box">
-            <div class="weather-stat-icon"><i class="fas fa-compass"></i></div>
-            <div class="weather-stat-info">
-              <h5>Dirección Viento</h5>
-              <p>${weather.winddirection}°</p>
-            </div>
-          </div>
-          <div class="weather-stat-box">
-            <div class="weather-stat-icon"><i class="fas fa-shield-alt"></i></div>
-            <div class="weather-stat-info">
-              <h5>Jurisdicción</h5>
-              <p>Miami-Dade</p>
-            </div>
-          </div>
-        </div>
-        <div style="background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.25); padding:1rem; border-radius:8px; font-size:0.8rem; color:#7dd3fc;">
-          <i class="fas fa-info-circle"></i> Datos satelitales en vivo obtenidos directamente de la API pública de Open-Meteo sin necesidad de clave de acceso.
-        </div>
+function renderUniverse() {
+  const u = state.universe;
+  if (!u.loaded || u.query !== state.query.trim()) { loadUniverse(state.query.trim()); return; }
+  if (u.failed) { view.innerHTML = errorState(); $('#view-count').textContent = 'Offline'; return; }
+  $('#view-count').textContent = state.query ? `${u.items.length} results from TVMaze` : `${u.items.length} franchise titles`;
+  if (!u.items.length) { view.innerHTML = emptyState('fa-satellite-dish', 'No shows found', `TVMaze has nothing for “${esc(state.query)}”.`); return; }
+  view.innerHTML = `${state.query ? '' : '<p class="section-label">Official Dexter franchise · live from TVMaze</p>'}
+    <div class="grid">${u.items.map((s, i) => `
+    <a class="card" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" style="--i:${Math.min(i, 14)}">
+      <div class="card-media">
+        <img src="${esc(https(s.image?.original || s.image?.medium) || PLACEHOLDER)}" alt="${esc(s.name)}" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+        <span class="badge ${s.status === 'Running' ? 'police' : 'other'}">${esc(s.status)}</span>
+        ${s.rating?.average ? `<span class="rating"><i class="fas fa-star"></i>${s.rating.average}</span>` : ''}
       </div>
-
-      <!-- Panel de Inteligencia de Wikipedia REST API -->
-      <div class="forensic-panel">
-        <div class="forensic-panel-header">
-          <h3><i class="fas fa-dna" style="color:var(--crimson-light);"></i> Archivo Enciclopédico</h3>
-          <span class="api-pill">Wikipedia REST API</span>
-        </div>
-        <div>
-          <h4 style="font-size:0.95rem; color:#fff; margin-bottom:0.4rem;"><i class="fas fa-tv"></i> Dexter (Serie de Televisión)</h4>
-          <p class="wiki-extract-text">${wikiDexter.extract}</p>
-        </div>
-        <div style="border-top:1px solid var(--border-subtle); padding-top:1rem;">
-          <h4 style="font-size:0.95rem; color:#fff; margin-bottom:0.4rem;"><i class="fas fa-microscope"></i> Análisis de Salpicaduras de Sangre</h4>
-          <p class="wiki-extract-text">${wikiForensics.extract}</p>
-        </div>
-      </div>
-    </div>
-  `;
+      <div class="card-body">
+        <h3 class="card-title">${esc(s.name)}</h3>
+        <p class="card-sub"><i class="far fa-calendar"></i> ${s.premiered ? s.premiered.slice(0, 4) : 'TBA'}${s.network || s.webChannel ? ` · ${esc((s.network || s.webChannel).name)}` : ''}</p>
+        <div class="card-meta">${(s.genres || []).slice(0, 3).map((g) => `<span class="meta">${esc(g)}</span>`).join('')}</div>
+      </div></a>`).join('')}</div>`;
 }
 
-// Estado de carga inicial
-function renderLoadingState() {
-  const container = document.getElementById('main-content-area');
-  container.innerHTML = `
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <h3>Consultando Bases de Datos de Miami Metro...</h3>
-      <p>Cargando información desde TVMaze API, Wikipedia REST API y Open-Meteo...</p>
-    </div>
-  `;
-}
+/* ----- Lab: weather + wikipedia ----- */
+function renderLab() {
+  $('#view-count').textContent = 'Live data';
+  const w = state.weather, cur = w?.current;
+  const wiki = state.wiki;
+  let weatherHtml;
+  if (cur) {
+    const [label, icon] = wmo(cur.weather_code);
+    const days = w.daily.time.map((d, i) => {
+      const date = new Date(d + 'T12:00');
+      const [, ic] = wmo(w.daily.weather_code[i]);
+      return `<div class="fday">${i === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}<i class="fas ${ic}"></i>
+        <b>${Math.round(w.daily.temperature_2m_max[i])}°</b> / ${Math.round(w.daily.temperature_2m_min[i])}°</div>`;
+    }).join('');
+    weatherHtml = `
+      <div class="weather-now"><i class="fas ${icon} big-icon"></i>
+        <div><div class="temp">${Math.round(cur.temperature_2m)}°C</div><div class="desc">${label} · ${cur.is_day ? 'Daytime' : 'Night'}</div></div></div>
+      <div class="mini-stats">
+        <div class="mini"><span>Humidity</span><b>${cur.relative_humidity_2m}%</b></div>
+        <div class="mini"><span>Wind</span><b>${cur.wind_speed_10m} km/h</b></div>
+        <div class="mini"><span>Location</span><b>Miami, FL</b></div>
+      </div>
+      <div class="forecast">${days}</div>`;
+  } else weatherHtml = '<p class="desc">Weather data is currently unavailable.</p>';
 
-function showErrorMessage(msg) {
-  const container = document.getElementById('main-content-area');
-  container.innerHTML = `
-    <div class="empty-state">
-      <i class="fas fa-exclamation-triangle"></i>
-      <h3>Fallo de Conexión</h3>
-      <p>${msg}</p>
-      <button class="card-action-btn" style="max-width:200px; margin: 1rem auto;" onclick="loadAllApis()">
-        <i class="fas fa-sync"></i> Reintentar
-      </button>
-    </div>
-  `;
+  const wikiBlock = (w, fallback) => w ? `<div class="wiki">
+      ${w.thumbnail ? `<img src="${esc(https(w.thumbnail.source))}" alt="${esc(w.title)}" loading="lazy">` : ''}
+      <h4>${esc(w.title)}</h4><p>${esc(w.extract)}</p>
+      <a href="${esc(w.content_urls?.desktop?.page || '#')}" target="_blank" rel="noopener noreferrer">Read on Wikipedia <i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>` : `<p class="desc">${fallback}</p>`;
+
+  const show = state.show;
+  const showMeta = show ? `<div class="mini-stats">
+      <div class="mini"><span>Premiered</span><b>${esc(show.premiered?.slice(0, 4) || '–')}</b></div>
+      <div class="mini"><span>Network</span><b>${esc(show.network?.name || '–')}</b></div>
+      <div class="mini"><span>TVMaze rating</span><b>${show.rating?.average ?? '–'}</b></div></div>` : '';
+
+  view.innerHTML = `<div class="lab">
+    <section class="panel"><div class="panel-head"><h3><i class="fas fa-cloud-sun" style="color:var(--teal)"></i> Miami weather</h3><span class="api-tag">Open-Meteo</span></div>${weatherHtml}</section>
+    <section class="panel"><div class="panel-head"><h3><i class="fas fa-tv" style="color:var(--red)"></i> The series</h3><span class="api-tag">Wikipedia + TVMaze</span></div>${showMeta}${wikiBlock(wiki.show, 'Article unavailable.')}</section>
+    <section class="panel full"><div class="panel-head"><h3><i class="fas fa-droplet" style="color:var(--red)"></i> Dexter's craft: blood-spatter analysis</h3><span class="api-tag">Wikipedia</span></div>${wikiBlock(wiki.lab, 'Article unavailable.')}</section>
+  </div>`;
 }
 
 /* ==========================================================================
-   MODAL INTERACTIVO DE PERSONAJE
+   Modal
    ========================================================================== */
-
-function openCharacterModal(id) {
-  const char = AppState.characters.find(c => c.id === id);
-  if (!char) return;
-
-  const modal = document.getElementById('character-modal');
-  document.getElementById('modal-char-name').textContent = char.name;
-  document.getElementById('modal-char-actor').textContent = char.actor;
-  document.getElementById('modal-char-role').textContent = char.roleLabel;
-  document.getElementById('modal-char-image').src = char.image;
-  document.getElementById('modal-char-desc').textContent = `${char.name} es uno de los personajes centrales del universo de Dexter. Interpretado con gran maestría por ${char.actor}. Presente en el laboratorio forense y en los expedientes criminales del Departamento de Policía de Miami Metro.`;
-  document.getElementById('modal-char-id').textContent = `MMPD-CASE-${char.id.toUpperCase()}`;
-
-  modal.classList.add('active');
+let lastFocus = null;
+function openModal(html) {
+  lastFocus = document.activeElement;
+  $('#modal-card').innerHTML = `<button class="icon-btn modal-close" data-action="close-modal" aria-label="Close"><i class="fas fa-xmark"></i></button>${html}`;
+  $('#modal').hidden = false;
+  document.body.style.overflow = 'hidden';
+  $('.modal-close').focus();
+}
+function closeModal() {
+  $('#modal').hidden = true;
+  document.body.style.overflow = '';
+  lastFocus?.focus?.();
 }
 
-function closeCharacterModal() {
-  const modal = document.getElementById('character-modal');
-  modal.classList.remove('active');
+function openCast(id) {
+  const c = state.cast.find((x) => x.id === id); if (!c) return;
+  const age = c.birthday ? Math.floor((Date.now() - new Date(c.birthday)) / 31557600000) : null;
+  openModal(`<div class="dossier">
+    <img src="${esc(c.image || PLACEHOLDER)}" alt="${esc(c.name)}" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+    <div class="dossier-info">
+      <span class="file-no">CASE FILE · MMPD-${String(c.order + 1).padStart(3, '0')}</span>
+      <h3 id="modal-title">${esc(c.name)}</h3>
+      <dl><dt>Played by</dt><dd>${esc(c.actor)}</dd>
+          <dt>Category</dt><dd>${categoryLabel(c.cat)}</dd>
+          <dt>Actor origin</dt><dd>${esc(c.country)}</dd>
+          ${age ? `<dt>Actor age</dt><dd>${age} years</dd>` : ''}
+          <dt>Billing</dt><dd>#${c.order + 1} in the cast list</dd></dl>
+      <p>${esc(c.name)} appears in <em>Dexter</em>, portrayed by ${esc(c.actor)}. Data provided by TVMaze.</p>
+      <div class="dossier-actions">
+        <button class="btn btn-primary" data-save="${c.id}" data-modal-save><i class="${state.saved.has(c.id) ? 'fas' : 'far'} fa-bookmark"></i> ${state.saved.has(c.id) ? 'Saved' : 'Save file'}</button>
+        <a class="btn btn-ghost" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">Actor profile <i class="fas fa-arrow-up-right-from-square"></i></a>
+      </div></div></div>`);
+}
+
+function openEpisode(id) {
+  const e = state.episodes.find((x) => x.id === id); if (!e) return;
+  openModal(`<div class="dossier">
+    <img src="${esc(e.image || PLACEHOLDER)}" alt="${esc(e.name)}" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+    <div class="dossier-info">
+      <span class="file-no">SEASON ${e.season} · EPISODE ${e.number}</span>
+      <h3 id="modal-title">${esc(e.name)}</h3>
+      <dl><dt>Aired</dt><dd>${e.airdate || 'TBA'}</dd>
+          <dt>Runtime</dt><dd>${e.runtime ? e.runtime + ' min' : '–'}</dd>
+          <dt>Rating</dt><dd>${e.rating ? '★ ' + e.rating + ' / 10' : 'Not rated'}</dd></dl>
+      <p>${esc(e.summary || 'No synopsis available.')}</p>
+      <div class="dossier-actions">
+        <button class="btn btn-primary" data-save="${e.id}" data-modal-save><i class="${state.saved.has(e.id) ? 'fas' : 'far'} fa-bookmark"></i> ${state.saved.has(e.id) ? 'Saved' : 'Save episode'}</button>
+        <a class="btn btn-ghost" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">View on TVMaze <i class="fas fa-arrow-up-right-from-square"></i></a>
+      </div></div></div>`);
 }
 
 /* ==========================================================================
-   FAVORITOS (EXPEDIENTES GUARDADOS - LOCALSTORAGE)
+   Saved items
    ========================================================================== */
-
-function toggleFavorite(id, event) {
-  if (event) event.stopPropagation();
-
-  const idx = AppState.favorites.indexOf(id);
-  if (idx > -1) {
-    AppState.favorites.splice(idx, 1);
-  } else {
-    AppState.favorites.push(id);
+function toggleSave(id) {
+  const adding = !state.saved.has(id);
+  adding ? state.saved.add(id) : state.saved.delete(id);
+  localStorage.setItem('dexter_saved', JSON.stringify([...state.saved]));
+  updateSavedBadge();
+  toast(adding ? 'Added to saved files' : 'Removed from saved files', adding ? 'fa-bookmark' : 'fa-trash');
+  if (!$('#modal').hidden) {
+    $$('[data-modal-save]').forEach((b) => {
+      b.innerHTML = `<i class="${adding ? 'fas' : 'far'} fa-bookmark"></i> ${adding ? 'Saved' : 'Save file'}`;
+    });
   }
+  if (state.tab === 'saved') render(); else $$(`.save-btn[data-save="${id}"]`).forEach((b) => {
+    b.classList.toggle('on', adding); b.setAttribute('aria-pressed', adding);
+    b.innerHTML = `<i class="${adding ? 'fas' : 'far'} fa-bookmark"></i>`;
+  });
+}
 
-  localStorage.setItem('dexter_favorites', JSON.stringify(AppState.favorites));
-  updateStatsAndWeatherUI();
-  renderCurrentView();
+function updateSavedBadge() {
+  const b = $('#saved-badge');
+  b.textContent = state.saved.size;
+  b.classList.toggle('show', state.saved.size > 0);
 }
 
 /* ==========================================================================
-   EVENT LISTENERS Y NAVEGACIÓN
+   Navigation & events
    ========================================================================== */
-
-function setupEventListeners() {
-  // Búsqueda en Navbar
-  const searchInput = document.getElementById('nav-search');
-  const clearBtn = document.getElementById('clear-search');
-
-  searchInput.addEventListener('input', (e) => {
-    AppState.searchQuery = e.target.value;
-    clearBtn.style.display = AppState.searchQuery ? 'block' : 'none';
-    applyFilters();
-  });
-
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    AppState.searchQuery = '';
-    clearBtn.style.display = 'none';
-    applyFilters();
-    searchInput.focus();
-  });
-
-  // Pestañas del Navbar
-  document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      AppState.currentTab = btn.getAttribute('data-tab');
-      renderCurrentView();
-    });
-  });
-
-  // Filtros del Sidebar
-  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      AppState.currentFilter = btn.getAttribute('data-filter');
-      // Asegurarse de que esté en la pestaña de personajes
-      if (AppState.currentTab !== 'characters') {
-        switchTab('characters');
-      } else {
-        applyFilters();
-      }
-    });
-  });
-
-  // Ordenamiento en Sidebar
-  const sortSelect = document.getElementById('sort-select');
-  if (sortSelect) {
-    sortSelect.addEventListener('change', (e) => {
-      AppState.currentSort = e.target.value;
-      applyFilters();
-    });
-  }
-
-  // Toggle de sidebar en móvil
-  const toggleBtn = document.getElementById('sidebar-toggle');
-  const sidebar = document.getElementById('sidebar');
-  if (toggleBtn && sidebar) {
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('mobile-open');
-    });
-  }
-
-  // Cerrar modal al dar click fuera o en botón cerrar
-  const modal = document.getElementById('character-modal');
-  if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeCharacterModal();
-    });
-  }
+function setTab(tab, push = true) {
+  if (!TITLES[tab]) tab = 'cast';
+  state.tab = tab;
+  if (push) history.replaceState(null, '', `#${tab}`);
+  closeSidebar();
+  render();
 }
 
-function handleSeasonChange(val) {
-  AppState.currentSeason = val;
-  applyFilters();
+function resetFilters() {
+  state.query = ''; state.category = 'all'; state.season = 'all'; state.sort = 'default';
+  $('#search').value = ''; $('#search-clear').hidden = true;
+  $$('#category-filters .chip').forEach((c) => c.classList.toggle('active', c.dataset.cat === 'all'));
+  $$('#season-filters .chip').forEach((c) => c.classList.toggle('active', c.dataset.season === 'all'));
+  render();
 }
 
-function switchTab(tabName) {
-  AppState.currentTab = tabName;
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    if (b.getAttribute('data-tab') === tabName) {
-      b.classList.add('active');
-    } else {
-      b.classList.remove('active');
+const openSidebar = () => { $('#sidebar').classList.add('open'); $('#backdrop').classList.add('show'); };
+const closeSidebar = () => { $('#sidebar').classList.remove('open'); $('#backdrop').classList.remove('show'); };
+
+const onSearch = debounce(() => render(), 220);
+
+function bindEvents() {
+  $('#tabs').addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) setTab(t.dataset.tab); });
+  $('#brand-link').addEventListener('click', (e) => { e.preventDefault(); resetFilters(); setTab('cast'); });
+  $('#menu-btn').addEventListener('click', openSidebar);
+  $('#sidebar-close').addEventListener('click', closeSidebar);
+  $('#backdrop').addEventListener('click', closeSidebar);
+  $('#reset-btn').addEventListener('click', () => { resetFilters(); toast('Filters reset', 'fa-rotate-left'); });
+
+  $('#search').addEventListener('input', (e) => {
+    state.query = e.target.value;
+    $('#search-clear').hidden = !state.query;
+    onSearch();
+  });
+  $('#search-clear').addEventListener('click', () => { $('#search').value = ''; state.query = ''; $('#search-clear').hidden = true; render(); $('#search').focus(); });
+
+  $('#category-filters').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    state.category = b.dataset.cat;
+    $$('#category-filters .chip').forEach((c) => c.classList.toggle('active', c === b));
+    render();
+  });
+  $('#season-filters').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    state.season = b.dataset.season;
+    $$('#season-filters .chip').forEach((c) => c.classList.toggle('active', c === b));
+    render();
+  });
+  $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
+
+  // Delegated clicks for cards / actions
+  document.addEventListener('click', (e) => {
+    const save = e.target.closest('[data-save]');
+    if (save) { e.preventDefault(); e.stopPropagation(); toggleSave(save.dataset.save); return; }
+    const act = e.target.closest('[data-action]');
+    if (act) {
+      const a = act.dataset.action;
+      if (a === 'reset') resetFilters();
+      if (a === 'reload') loadAll();
+      if (a === 'close-modal') closeModal();
+      return;
+    }
+    const clr = e.target.closest('[data-clear]');
+    if (clr) {
+      const k = clr.dataset.clear;
+      if (k === 'query') { $('#search').value = ''; state.query = ''; $('#search-clear').hidden = true; }
+      if (k === 'category') { state.category = 'all'; $$('#category-filters .chip').forEach((c) => c.classList.toggle('active', c.dataset.cat === 'all')); }
+      if (k === 'season') { state.season = 'all'; $$('#season-filters .chip').forEach((c) => c.classList.toggle('active', c.dataset.season === 'all')); }
+      render(); return;
+    }
+    const cast = e.target.closest('[data-open-cast]'); if (cast) return openCast(cast.dataset.openCast);
+    const ep = e.target.closest('[data-open-ep]'); if (ep) return openEpisode(ep.dataset.openEp);
+    if (e.target === $('#modal')) closeModal();
+    const link = e.target.closest('.footer a[href^="#"]');
+    if (link) { e.preventDefault(); setTab(link.getAttribute('href').slice(1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { if (!$('#modal').hidden) closeModal(); else closeSidebar(); }
+    if (e.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { e.preventDefault(); $('#search').focus(); }
+    if ((e.key === 'Enter' || e.key === ' ') && document.activeElement.classList.contains('card') && !document.activeElement.href) {
+      e.preventDefault(); document.activeElement.click();
     }
   });
-  renderCurrentView();
+  window.addEventListener('hashchange', () => setTab(location.hash.slice(1), false));
 }
 
-function resetAllFilters() {
-  AppState.searchQuery = '';
-  AppState.currentFilter = 'all';
-  AppState.currentSort = 'default';
-  AppState.currentSeason = 'all';
-
-  document.getElementById('nav-search').value = '';
-  document.getElementById('clear-search').style.display = 'none';
-  document.getElementById('sort-select').value = 'default';
-
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    if (b.getAttribute('data-filter') === 'all') {
-      b.classList.add('active');
-    } else {
-      b.classList.remove('active');
-    }
-  });
-
-  switchTab('characters');
-  applyFilters();
-}
-
-function getFilterName(f) {
-  switch (f) {
-    case 'police': return 'Miami Metro Police';
-    case 'antagonist': return 'Asesinos & Antagonistas';
-    case 'civilian': return 'Civiles & Familia';
-    default: return 'Todos los Personajes';
-  }
-}
+/* ==========================================================================
+   Boot
+   ========================================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  const initial = location.hash.slice(1);
+  if (TITLES[initial]) state.tab = initial;
+  bindEvents();
+  updateSavedBadge();
+  loadAll();
+});
