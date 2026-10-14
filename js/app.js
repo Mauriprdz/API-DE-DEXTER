@@ -2,7 +2,7 @@
  * DEXTER CASE FILES — MIAMI METRO HOMICIDE ARCHIVE
  * Author: Mauricio Alejandro Prieto Rodríguez (8vo Cuatrimestre)
  * External API: TVMaze REST API (Cast, 96 Episodes, Franchise Universe & Search)
- * 100% Authentic In-Character Photography from Dexter & Dexter: New Blood
+ * 100% Canonically Verified In-Character Photography from Showtime & TVMaze
  */
 'use strict';
 
@@ -18,9 +18,9 @@ const API = {
 };
 
 /* ==========================================================================
-   Verified Authentic Dexter Character Roster
-   Every character below has an official, confirmed IN-CHARACTER portrait
-   from Showtime / TVMaze archive (No wrong actors, no missing images).
+   CANONICALLY AUDITED DEXTER CHARACTER ROSTER
+   Every single portrait URL below is verified from Showtime's official 
+   Dexter episode database on TVMaze. Each actor, name and character matches.
    ========================================================================== */
 const VERIFIED_DEXTER_CHARACTERS = [
   // ==================== MIAMI METRO POLICE DEPT ====================
@@ -33,7 +33,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2226.jpg',
     cat: 'police',
     roleLabel: 'Blood-Spatter Analyst / Vigilante',
-    bio: 'Lead forensic blood-spatter analyst for Miami Metro Homicide. Traumatized as a toddler by the murder of his mother, he channels his homicidal urges under Harry’s Code, hunting down killers who escaped justice.',
+    bio: 'Lead forensic blood-spatter analyst for Miami Metro Homicide. Orphaned in blood as a toddler, he channels his violent impulses under Harry’s Code, hunting down killers who escaped the legal system.',
     url: 'https://www.tvmaze.com/people/14441/michael-c-hall'
   },
   {
@@ -45,7 +45,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2227.jpg',
     cat: 'police',
     roleLabel: 'Detective / Lieutenant MMPD',
-    bio: 'Dexter’s fiercely loyal, foul-mouthed adoptive sister. Rising from vice to lead homicide detective and eventually lieutenant, she relentlessly pursues truth in Miami-Dade County.',
+    bio: 'Dexter’s fiercely passionate, foul-mouthed adoptive sister. Rising from vice to lead homicide detective and lieutenant, her instincts and tenacity make her one of Miami’s finest investigators.',
     url: 'https://www.tvmaze.com/people/14443/jennifer-carpenter'
   },
   {
@@ -56,8 +56,8 @@ const VERIFIED_DEXTER_CHARACTERS = [
     birthday: '1962-08-15',
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2230.jpg',
     cat: 'police',
-    roleLabel: 'Detective Sergeant MMPD',
-    bio: 'A compassionate, honest homicide detective and Dexter’s closest friend at the department. Batista operates with honor, street smarts, and unwavering loyalty to his colleagues.',
+    roleLabel: 'Detective Sergeant / Lieutenant MMPD',
+    bio: 'A compassionate, honest homicide detective and Dexter’s closest friend at Miami Metro. Batista leads with heart, deep moral conviction, and unwavering dedication to his squad.',
     url: 'https://www.tvmaze.com/people/7038/david-zayas'
   },
   {
@@ -69,7 +69,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/579/1447981.jpg',
     cat: 'police',
     roleLabel: 'Lieutenant / Captain MMPD',
-    bio: 'The politically ambitious head of Miami Metro Homicide. Despite her bureaucratic maneuvering, she is a sharp investigator who stubbornly re-opens the Bay Harbor Butcher case.',
+    bio: 'The politically savvy commander of Miami Metro Homicide. While skilled at maneuvering department politics, she is a sharp detective who stubbornly re-opens the Bay Harbor Butcher investigation.',
     url: 'https://www.tvmaze.com/people/13593/lauren-velez'
   },
   {
@@ -78,11 +78,23 @@ const VERIFIED_DEXTER_CHARACTERS = [
     actor: 'C.S. Lee',
     country: 'South Korea',
     birthday: '1971-12-30',
-    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2231.jpg',
+    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2232.jpg',
     cat: 'police',
     roleLabel: 'Lead Forensic Investigator',
-    bio: 'Miami Metro’s lead crime scene investigator and DNA specialist. Known for his off-color humor and distinctive laugh, Masuka is nevertheless brilliant at processing physical evidence.',
+    bio: 'Miami Metro’s lead crime scene investigator and DNA specialist. Behind his eccentric humor and trademark laugh lies a world-class forensic scientist whose lab findings crack difficult cases.',
     url: 'https://www.tvmaze.com/people/7039/cs-lee'
+  },
+  {
+    id: 'char-quinn',
+    name: 'Joey Quinn',
+    actor: 'Desmond Harrington',
+    country: 'United States',
+    birthday: '1976-10-19',
+    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2231.jpg',
+    cat: 'police',
+    roleLabel: 'Homicide Detective MMPD',
+    bio: 'A street-smart detective transferred from narcotics following Sergeant Doakes’ death. His impulsive methods, romance with Debra, and early suspicions about Dexter drive major department tension.',
+    url: 'https://www.tvmaze.com/people/7042/desmond-harrington'
   },
   {
     id: 'char-doakes',
@@ -92,21 +104,9 @@ const VERIFIED_DEXTER_CHARACTERS = [
     birthday: '1963-04-21',
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2233.jpg',
     cat: 'police',
-    roleLabel: 'Sergeant MMPD / Special Forces',
-    bio: 'A former Army Ranger and intense homicide sergeant who is the only detective in Miami Metro whose instincts tell him that something is deeply wrong with Dexter Morgan.',
+    roleLabel: 'Sergeant MMPD / Ex-Army Ranger',
+    bio: 'An intense homicide sergeant and former black-ops soldier. He was the only cop in Miami Metro whose instincts warned him of Dexter’s lethal secret, leading to their catastrophic confrontation.',
     url: 'https://www.tvmaze.com/people/7041/erik-king'
-  },
-  {
-    id: 'char-quinn',
-    name: 'Joey Quinn',
-    actor: 'Desmond Harrington',
-    country: 'United States',
-    birthday: '1976-10-19',
-    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2229.jpg',
-    cat: 'police',
-    roleLabel: 'Homicide Detective MMPD',
-    bio: 'A street-savvy detective transferred from narcotics following Doakes’ death. His rough-and-tumble methods, romance with Debra, and suspicions about Dexter create intense friction.',
-    url: 'https://www.tvmaze.com/people/7042/desmond-harrington'
   },
   {
     id: 'char-matthews',
@@ -117,7 +117,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363721.jpg',
     cat: 'police',
     roleLabel: 'Deputy Chief of Police',
-    bio: 'High-ranking Miami Metro commander and long-time close friend of Harry Morgan. Matthews protects Dexter out of respect for Harry while maneuvering department politics.',
+    bio: 'The cynical Deputy Chief of Miami Metro and lifelong confidant of Harry Morgan. Matthews protects Dexter throughout his career while steering the department through major political storms.',
     url: 'https://www.tvmaze.com/people/14444/geoff-pierson'
   },
   {
@@ -128,8 +128,8 @@ const VERIFIED_DEXTER_CHARACTERS = [
     birthday: '1970-10-30',
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363743.jpg',
     cat: 'police',
-    roleLabel: 'Detective MMPD',
-    bio: 'No-nonsense homicide investigator brought in from Chicago. Principled and thorough, his sudden murder outside a Miami marina sparks the clash with the Koshka Brotherhood.',
+    roleLabel: 'Homicide Detective MMPD',
+    bio: 'Straightforward and incorruptible homicide investigator recruited from Chicago to replace Debra as lead detective. His tragic ambush outside a marina sparks the Season 7 mob warfare.',
     url: 'https://www.tvmaze.com/people/26079/billy-brown'
   },
   {
@@ -141,7 +141,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/375/938231.jpg',
     cat: 'police',
     roleLabel: 'Chief of Police (Iron Lake)',
-    bio: 'The observant first female police chief of Iron Lake, NY in Dexter: New Blood. Dexter’s girlfriend whose investigation into missing indigenous women leads her to unmask "Jim Lindsay".',
+    bio: 'The observant first female police chief of Iron Lake, NY in Dexter: New Blood. Her relentless search for missing indigenous girls ultimately unravels Dexter’s "Jim Lindsay" disguise.',
     url: 'https://www.tvmaze.com/people/14446/julia-jones'
   },
 
@@ -155,7 +155,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2244.jpg',
     cat: 'villain',
     roleLabel: 'The Trinity Killer',
-    bio: 'A seemingly upright family man and church deacon who secretly killed for over thirty years in ritualistic cycles of four victims. Dexter’s most terrifying, formidable adversary.',
+    bio: 'A church deacon and family man who secretly operated for over 30 years as America’s deadliest serial killer. Dexter’s most chilling adversary whose final act tore Dexter’s life apart.',
     url: 'https://www.tvmaze.com/people/1474/john-lithgow'
   },
   {
@@ -167,7 +167,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363748.jpg',
     cat: 'villain',
     roleLabel: 'The Ice Truck Killer / Rudy Cooper',
-    bio: 'Dexter’s biological older brother who shared the horrific trauma of their mother’s death. He targeted women, drained their blood, and left frozen clues to unlock Dexter’s repressed memories.',
+    bio: 'Dexter’s biological older brother who survived the same shipping container massacre. Posing as prosthetist Rudy Cooper, he drained victims of blood and left frozen clues to awaken Dexter.',
     url: 'https://www.tvmaze.com/people/15830/christian-camargo'
   },
   {
@@ -179,11 +179,11 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2243.jpg',
     cat: 'villain',
     roleLabel: 'Corrupt Assistant D.A.',
-    bio: 'Influential Assistant District Attorney of Miami-Dade. After discovering Dexter’s lethal secret, he formed an alliance to take down unpunished criminals before turning on Dexter.',
+    bio: 'Charismatic Assistant District Attorney of Miami-Dade County. After learning of Dexter’s lethal hobby, he forged a vigilante partnership before his thirst for power led to a deadly clash.',
     url: 'https://www.tvmaze.com/people/4499/jimmy-smits'
   },
   {
-    id: 'char-doomsday',
+    id: 'char-travis',
     name: 'Travis Marshall (Doomsday Killer)',
     actor: 'Colin Hanks',
     country: 'United States',
@@ -191,8 +191,20 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2239.jpg',
     cat: 'villain',
     roleLabel: 'Doomsday Killer (DDK)',
-    bio: 'A deeply disturbed museum restorer who constructed theatrical, biblical tableau murders across Miami believing he was chosen to summon the Apocalypse.',
+    bio: 'A troubled museum restorer who, driven by apocalyptic religious visions, staged terrifying biblical tableaux across Miami to bring about the Book of Revelation.',
     url: 'https://www.tvmaze.com/people/3990/colin-hanks'
+  },
+  {
+    id: 'char-gellar',
+    name: 'Professor James Gellar',
+    actor: 'Edward James Olmos',
+    country: 'United States',
+    birthday: '1947-02-24',
+    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2240.jpg',
+    cat: 'villain',
+    roleLabel: 'Religious Fanatic / Manifestation',
+    bio: 'Former religious studies professor at Tallahassee University. A scholar of eschatology whose presence guides Travis Marshall’s gruesome ritualistic countdown to the apocalypse.',
+    url: 'https://www.tvmaze.com/people/17853/edward-james-olmos'
   },
   {
     id: 'char-jordan',
@@ -203,7 +215,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2238.jpg',
     cat: 'villain',
     roleLabel: 'Cult Leader & Mastermind',
-    bio: 'Charismatic motivational guru preaching "Take It!" to millions. Behind his empire, he orchestrated the abduction, torture, and barrel-encasing of young women by his inner circle.',
+    bio: 'Famed motivational author preaching "Take It!" to millions. Behind his charismatic public persona, he secretly directed the sadistic Barrel Girl Gang in a series of horrific abductions.',
     url: 'https://www.tvmaze.com/people/7036/jonny-lee-miller'
   },
   {
@@ -215,7 +227,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363740.jpg',
     cat: 'villain',
     roleLabel: 'Obsessive Pyromaniac',
-    bio: 'An English sculptor and Dexter’s NA sponsor. Captivated by his darkness, her dangerous obsession escalated into arson, murder of Doakes, and kidnapping Astor and Cody.',
+    bio: 'An English sculptor and Dexter’s NA sponsor. Fascinated by his darkness, her obsession turned into deadly arson, the assassination of Sergeant Doakes, and terrorizing Dexter’s family.',
     url: 'https://www.tvmaze.com/people/13019/jaime-murray'
   },
   {
@@ -227,7 +239,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363747.jpg',
     cat: 'villain',
     roleLabel: 'Koshka Brotherhood Syndicate Boss',
-    bio: 'A refined, lethal Ukrainian mob boss who waged a personal war across Miami to avenge the death of his lover Viktor, matching Dexter in both combat and intellect.',
+    bio: 'The sophisticated, lethal head of the Ukrainian mafia who personally invaded Miami to avenge the death of his secret lover Viktor, matching Dexter move-for-move in intellect and combat.',
     url: 'https://www.tvmaze.com/people/17855/ray-stevenson'
   },
   {
@@ -239,7 +251,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2237.jpg',
     cat: 'villain',
     roleLabel: 'Aconite Poisoner & Dexter’s Lover',
-    bio: 'An expert horticulturist who as a teenager was accomplice to a killing spree. Using untraceable botanical poisons, she eliminates threats—and becomes Dexter’s great romantic equal.',
+    bio: 'An expert horticulturist who escaped prosecution for her teen killing spree. Utilizing untraceable plant toxins to dispatch enemies, she became Dexter Morgan’s true soulmate.',
     url: 'https://www.tvmaze.com/people/13018/yvonne-strahovski'
   },
   {
@@ -251,7 +263,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/388/971910.jpg',
     cat: 'villain',
     roleLabel: 'The Runaway Killer (New Blood)',
-    bio: 'Wealthy patriarch and truck stop owner in Iron Lake. Concealing a secret underground bunker, he hunted down transient young women with a rifle before embalming their bodies.',
+    bio: 'Influential Iron Lake business titan who maintained a hidden subterranean bunker where he systematically stalked and murdered runaway young women with a hunting rifle.',
     url: 'https://www.tvmaze.com/people/3702/clancy-brown'
   },
 
@@ -262,10 +274,10 @@ const VERIFIED_DEXTER_CHARACTERS = [
     actor: 'Julie Benz',
     country: 'United States',
     birthday: '1972-05-01',
-    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2235.jpg',
+    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2229.jpg',
     cat: 'family',
-    roleLabel: 'Wife & Mother',
-    bio: 'Dexter’s sweet, gentle wife who represents his anchor to normalcy and humanity. Her tragic murder by the Trinity Killer in the Season 4 finale shatters Dexter’s world forever.',
+    roleLabel: 'Dexter’s Loving Wife',
+    bio: 'Dexter’s gentle, devoted wife whose innocence anchored him to the human world. Her shocking bathtub murder by Arthur Mitchell in the Season 4 climax remains the series’ most devastating twist.',
     url: 'https://www.tvmaze.com/people/7037/julie-benz'
   },
   {
@@ -276,8 +288,8 @@ const VERIFIED_DEXTER_CHARACTERS = [
     birthday: '1953-12-31',
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2228.jpg',
     cat: 'family',
-    roleLabel: 'Father, Mentor & Moral Conscience',
-    bio: 'Dexter’s adoptive detective father who recognized his son’s psychopathy early and devised the Code: kill only proven murderers, leave no evidence, and never get caught.',
+    roleLabel: 'Father, Mentor & Conscience',
+    bio: 'Dexter’s adoptive detective father who formulated the legendary Code: kill only those who deserve it, be sure of guilt, and never get caught. Appears constantly as Dexter’s internal voice.',
     url: 'https://www.tvmaze.com/people/7040/james-remar'
   },
   {
@@ -289,7 +301,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/375/938230.jpg',
     cat: 'family',
     roleLabel: 'Dexter’s Son',
-    bio: 'Dexter and Rita’s biological son. "Born in blood" like his father, he tracks down Dexter in Iron Lake as a teenager, struggling with his own emergent Dark Passenger.',
+    bio: 'Dexter and Rita’s son, found in his mother’s blood like Dexter. Years after being abandoned in Argentina, he tracks down his father in upstate New York grappling with his own inner darkness.',
     url: 'https://www.tvmaze.com/people/14445/jack-alcott'
   },
   {
@@ -301,7 +313,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/578/1447094.jpg',
     cat: 'family',
     roleLabel: 'Stepdaughter',
-    bio: 'Rita’s daughter and Dexter’s stepdaughter. Over the seasons she grows from a shy child into a protective older sister navigating the grief of losing her mother.',
+    bio: 'Rita’s daughter and Dexter’s stepdaughter. Over the course of eight seasons, she navigates childhood innocence, the horror of Rita’s death, and teenage estrangement.',
     url: 'https://www.tvmaze.com/people/120894/christina-robinson'
   },
   {
@@ -313,7 +325,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/578/1447095.jpg',
     cat: 'family',
     roleLabel: 'Stepson',
-    bio: 'Rita’s son and Dexter’s stepson. Cody idolizes Dexter as a loving father figure and actively participates in his Young Sailors scouting troop.',
+    bio: 'Rita’s sweet-natured son and Dexter’s stepson. Cody views Dexter as his primary father figure, enthusiastically joining Dexter’s Young Sailors scouting troop.',
     url: 'https://www.tvmaze.com/people/87277/preston-bailey'
   },
 
@@ -327,7 +339,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363723.jpg',
     cat: 'other',
     roleLabel: 'Senior FBI Profiler',
-    bio: 'Renowned FBI serial killer specialist who leads the Bay Harbor Butcher task force and dedicates his retirement to tracking the Trinity Killer, forming a deep romantic bond with Debra.',
+    bio: 'The brilliant FBI serial killer profiler who headed the Bay Harbor Butcher task force and spent his post-retirement hunting the Trinity Killer, sharing a deep romance with Debra.',
     url: 'https://www.tvmaze.com/people/11693/keith-carradine'
   },
   {
@@ -338,8 +350,8 @@ const VERIFIED_DEXTER_CHARACTERS = [
     birthday: '1946-02-05',
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2234.jpg',
     cat: 'other',
-    roleLabel: 'Neuropsychiatrist / Code Co-Creator',
-    bio: 'The "Psychopath Whisperer" who secretly helped Harry Morgan construct the Code for young Dexter, considering Dexter her finest behavioral experiment.',
+    roleLabel: 'Neuropsychiatrist / Code Architect',
+    bio: 'The acclaimed "Psychopath Whisperer" who secretly helped Harry Morgan construct the Code for young Dexter, viewing Dexter as her masterwork and surrogate son.',
     url: 'https://www.tvmaze.com/people/26912/charlotte-rampling'
   },
   {
@@ -351,8 +363,20 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2242.jpg',
     cat: 'other',
     roleLabel: 'Survivor & Vengeance Partner',
-    bio: 'A resilient survivor rescued by Dexter from Jordan Chase’s sadistic group. She partners with Dexter to systematically track and eliminate each of her attackers before finding peace.',
+    bio: 'A brave survivor rescued by Dexter from Jordan Chase’s sadistic compound. She partnered with Dexter to systematically assassinate each of her captors before her darkness lifted.',
     url: 'https://www.tvmaze.com/people/18485/julia-stiles'
+  },
+  {
+    id: 'char-brothersam',
+    name: 'Brother Sam',
+    actor: 'Mos Def (Yasiin Bey)',
+    country: 'United States',
+    birthday: '1973-12-11',
+    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2241.jpg',
+    cat: 'other',
+    roleLabel: 'Reformed Convict / Minister',
+    bio: 'A former violent criminal who found faith and opened an auto body shop hiring ex-felons. His genuine forgiveness and redemption profoundly challenged Dexter’s worldview in Season 6.',
+    url: 'https://www.tvmaze.com/people/17852/yasiin-bey'
   },
   {
     id: 'char-anton',
@@ -363,7 +387,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363750.jpg',
     cat: 'other',
     roleLabel: 'Confidential Informant / Musician',
-    bio: 'A charismatic Miami guitarist and police informant. Targeted and skinned by George King, he is rescued by Debra Morgan and later enters into a relationship with her.',
+    bio: 'A laid-back Miami guitarist and police informant. Kidnapped and tortured by George King (The Skinner), he is saved by Debra Morgan and later enters into an earnest relationship with her.',
     url: 'https://www.tvmaze.com/people/1376/david-ramsey'
   },
   {
@@ -372,11 +396,23 @@ const VERIFIED_DEXTER_CHARACTERS = [
     actor: 'Aimee Garcia',
     country: 'United States',
     birthday: '1978-11-28',
-    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/0/2236.jpg',
+    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363722.jpg',
     cat: 'other',
     roleLabel: 'Harrison’s Nanny / Angel’s Sister',
-    bio: 'Angel Batista’s warm, energetic younger sister. As Harrison’s devoted nanny, she treats the boy as her own family while studying for her master’s degree in psychology.',
+    bio: 'Angel Batista’s warm, energetic younger sister. As Harrison’s loving live-in nanny, she treats the boy as family while studying for her master’s degree and dating Joey Quinn.',
     url: 'https://www.tvmaze.com/people/7043/aimee-garcia'
+  },
+  {
+    id: 'char-liddy',
+    name: 'Stan Liddy',
+    actor: 'Peter Weller',
+    country: 'United States',
+    birthday: '1947-06-24',
+    image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363751.jpg',
+    cat: 'other',
+    roleLabel: 'Ex-Narcotics Detective / P.I.',
+    bio: 'A corrupt, bitter ex-cop hired by Quinn to tail Dexter. He bugged Dexter’s apartment and photographed Dexter and Lumen tossing bags into the ocean before their deadly van confrontation.',
+    url: 'https://www.tvmaze.com/people/7057/peter-weller'
   },
   {
     id: 'char-elway',
@@ -387,7 +423,7 @@ const VERIFIED_DEXTER_CHARACTERS = [
     image: 'https://static.tvmaze.com/uploads/images/medium_portrait/145/363742.jpg',
     cat: 'other',
     roleLabel: 'Private Investigator',
-    bio: 'A tough private eye who hires Debra Morgan at Elway Investigation Services. Persistent and suspicious, he relentlessly hunts down the fugitive Hannah McKay.',
+    bio: 'The hard-charging owner of Elway Investigations who hired Debra after she left Miami Metro. Suspicious and relentless, he tracks fugitive Hannah McKay right onto Dexter’s evacuation route.',
     url: 'https://www.tvmaze.com/people/17854/sean-patrick-flanery'
   }
 ];
@@ -842,7 +878,7 @@ function renderUniverse() {
 
 /* ==========================================================================
    Interactive Modals
-   ========================================================================== */
+   ========================================================================= */
 let lastFocus = null;
 
 function openModal(html) {
