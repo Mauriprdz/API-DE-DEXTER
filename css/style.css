@@ -1,5 +1,6 @@
 /* ==========================================================================
-   DEXTER CASE FILES — Design system
+   DEXTER CASE FILES — Design System
+   Miami Metro Homicide & Criminal Archive
    ========================================================================== */
 :root {
   --bg: #0a0708;
@@ -113,13 +114,15 @@ img {
   left: 8px;
 }
 
-/* ---------- Navbar ---------- */
+/* ==========================================================================
+   NAVBAR (CHECKLIST 1 - REQUIREMENT 1)
+   ========================================================================== */
 .navbar {
   position: sticky;
   top: 0;
   z-index: 60;
   height: var(--nav-h);
-  background: rgba(10, 7, 8, .78);
+  background: rgba(10, 7, 8, .82);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-bottom: 1px solid var(--line);
@@ -189,7 +192,7 @@ img {
   display: flex;
   align-items: center;
   gap: .5rem;
-  padding: .55rem .9rem;
+  padding: .55rem .95rem;
   border-radius: 999px;
   color: var(--muted);
   font-weight: 500;
@@ -228,10 +231,10 @@ img {
 .search {
   position: relative;
   margin-left: auto;
-  width: min(380px, 100%);
+  width: min(420px, 100%);
 }
 
-.search>i.fa-magnifying-glass {
+.search > i.fa-magnifying-glass {
   position: absolute;
   left: 14px;
   top: 50%;
@@ -300,24 +303,6 @@ img {
   color: #fff;
 }
 
-.weather-chip {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .45rem .85rem;
-  border-radius: 999px;
-  background: rgba(45, 212, 191, .1);
-  border: 1px solid rgba(45, 212, 191, .3);
-  color: #8ff0e1;
-  font-size: .78rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.weather-chip i {
-  color: var(--gold);
-}
-
 .icon-btn {
   width: 40px;
   height: 40px;
@@ -338,7 +323,9 @@ img {
   display: none;
 }
 
-/* ---------- Shell ---------- */
+/* ==========================================================================
+   SHELL & SIDEBAR (CHECKLIST 1 - REQUIREMENT 2)
+   ========================================================================== */
 .shell {
   flex: 1;
   width: 100%;
@@ -348,7 +335,6 @@ img {
   grid-template-columns: var(--side-w) minmax(0, 1fr);
 }
 
-/* ---------- Sidebar ---------- */
 .sidebar {
   position: sticky;
   top: var(--nav-h);
@@ -601,7 +587,9 @@ img {
   display: none;
 }
 
-/* ---------- Main ---------- */
+/* ==========================================================================
+   MAIN CONTAINER (CHECKLIST 1 - REQUIREMENT 3)
+   ========================================================================== */
 .main {
   padding: 1.5rem 2rem 3rem;
   min-width: 0;
@@ -778,7 +766,9 @@ img {
   animation: fadeUp .45s var(--ease);
 }
 
-/* ---------- Cards ---------- */
+/* ==========================================================================
+   CARDS & GRIDS
+   ========================================================================== */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -872,7 +862,8 @@ img {
 }
 
 .badge.other {
-  color: var(--muted);
+  color: #c084fc;
+  border-color: rgba(192, 132, 252, .45);
 }
 
 .badge.code {
@@ -976,166 +967,9 @@ mark {
   padding: 0 2px;
 }
 
-/* ---------- Lab ---------- */
-.lab {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
-}
-
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 1.5rem;
-}
-
-.panel.full {
-  grid-column: 1/-1;
-}
-
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.1rem;
-  padding-bottom: .9rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.panel-head h3 {
-  font-family: var(--font-head);
-  font-size: 1.15rem;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-}
-
-.api-tag {
-  font-size: .68rem;
-  font-weight: 600;
-  padding: .2rem .6rem;
-  border-radius: 999px;
-  color: var(--red-300);
-  background: rgba(225, 29, 46, .12);
-  border: 1px solid rgba(225, 29, 46, .35);
-}
-
-.weather-now {
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  margin-bottom: 1.2rem;
-}
-
-.weather-now .big-icon {
-  font-size: 3rem;
-  color: var(--gold);
-}
-
-.weather-now .temp {
-  font-family: var(--font-head);
-  font-size: 3.2rem;
-  line-height: 1;
-}
-
-.weather-now .desc {
-  color: var(--muted);
-  font-size: .88rem;
-}
-
-.mini-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: .7rem;
-  margin-bottom: 1.2rem;
-}
-
-.mini {
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  padding: .7rem .8rem;
-}
-
-.mini span {
-  display: block;
-  font-size: .66rem;
-  color: var(--dim);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.mini b {
-  font-size: 1.05rem;
-}
-
-.forecast {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: .5rem;
-}
-
-.fday {
-  text-align: center;
-  padding: .7rem .3rem;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  font-size: .75rem;
-  color: var(--muted);
-}
-
-.fday i {
-  display: block;
-  margin: .4rem 0;
-  font-size: 1.15rem;
-  color: var(--teal);
-}
-
-.fday b {
-  color: var(--text);
-}
-
-.wiki {
-  display: flex;
-  flex-direction: column;
-  gap: .9rem;
-}
-
-.wiki img {
-  width: 100%;
-  max-height: 200px;
-  object-fit: cover;
-  object-position: top;
-  border-radius: var(--r-sm);
-}
-
-.wiki h4 {
-  font-family: var(--font-head);
-  font-size: 1.05rem;
-  letter-spacing: .03em;
-}
-
-.wiki p {
-  font-size: .86rem;
-  color: var(--muted);
-}
-
-.wiki a {
-  font-size: .8rem;
-  font-weight: 600;
-  color: var(--red-300);
-}
-
-.wiki a:hover {
-  text-decoration: underline;
-}
-
-/* ---------- State blocks ---------- */
+/* ==========================================================================
+   STATE BLOCKS & SKELETONS
+   ========================================================================== */
 .empty {
   text-align: center;
   padding: 4rem 1.5rem;
@@ -1185,7 +1019,9 @@ mark {
   margin-top: 2rem;
 }
 
-/* ---------- Modal ---------- */
+/* ==========================================================================
+   MODAL DOSSIER
+   ========================================================================== */
 .modal {
   position: fixed;
   inset: 0;
@@ -1277,6 +1113,7 @@ mark {
 .dossier-info p {
   color: var(--muted);
   font-size: .88rem;
+  line-height: 1.5;
 }
 
 .dossier-actions {
@@ -1286,7 +1123,9 @@ mark {
   margin-top: auto;
 }
 
-/* ---------- Toasts ---------- */
+/* ==========================================================================
+   TOASTS
+   ========================================================================== */
 .toasts {
   position: fixed;
   bottom: 1.25rem;
@@ -1314,7 +1153,9 @@ mark {
   color: var(--red-300);
 }
 
-/* ---------- Footer ---------- */
+/* ==========================================================================
+   FOOTER (CHECKLIST 1 - REQUIREMENT 4)
+   ========================================================================== */
 .footer {
   margin-top: auto;
   border-top: 1px solid var(--line);
@@ -1383,13 +1224,14 @@ mark {
   color: var(--dim);
 }
 
-/* ---------- Animations ---------- */
+/* ==========================================================================
+   ANIMATIONS & MEDIA QUERIES
+   ========================================================================== */
 @keyframes fadeUp {
   from {
     opacity: 0;
     transform: translateY(14px);
   }
-
   to {
     opacity: 1;
     transform: none;
@@ -1397,9 +1239,7 @@ mark {
 }
 
 @keyframes fade {
-  from {
-    opacity: 0;
-  }
+  from { opacity: 0; }
 }
 
 @keyframes pop {
@@ -1407,7 +1247,6 @@ mark {
     opacity: 0;
     transform: scale(.94) translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: none;
@@ -1415,26 +1254,18 @@ mark {
 }
 
 @keyframes pulse {
-
-  50% {
-    opacity: .3;
-  }
+  50% { opacity: .3; }
 }
 
 @keyframes shimmer {
-  to {
-    background-position: -200% 0;
-  }
+  to { background-position: -200% 0; }
 }
 
 @keyframes slide {
-  to {
-    background-position: 200% 0;
-  }
+  to { background-position: 200% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   *,
   *::before,
   *::after {
@@ -1444,16 +1275,13 @@ mark {
   }
 }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 1280px) {
   .tab span {
     display: none;
   }
-
   .tab {
     padding: .6rem .8rem;
   }
-
   .tab-count {
     margin-left: -.2rem;
   }
@@ -1508,10 +1336,6 @@ mark {
   .footer-grid {
     grid-template-columns: 1fr 1fr;
   }
-
-  .lab {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 720px) {
@@ -1528,10 +1352,6 @@ mark {
 
   .brand-text small {
     display: none;
-  }
-
-  .weather-chip {
-    margin-left: auto;
   }
 
   .tabs {
@@ -1585,10 +1405,6 @@ mark {
   .dossier img {
     min-height: 0;
     height: 300px;
-  }
-
-  .mini-stats {
-    grid-template-columns: 1fr 1fr;
   }
 
   .footer-grid {

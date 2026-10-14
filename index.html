@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dexter Case Files | Miami Metro Forensic Archive</title>
+  <title>Dexter Case Files | Miami Metro Homicide Archive</title>
   <meta name="description"
-    content="Explore the world of Dexter: cast dossiers, every episode, franchise spin-offs, live Miami weather and forensic science. Powered by TVMaze, Wikipedia and Open-Meteo APIs.">
+    content="Explore the world of Dexter: character dossiers, infamous killers and villains, every episode guide and franchise spin-offs. Powered live by TVMaze API.">
   <meta name="theme-color" content="#0a0708">
   <link rel="icon"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 6C50 6 18 44 18 64a32 32 0 0 0 64 0C82 44 50 6 50 6z' fill='%23e11d2e'/%3E%3C/svg%3E">
@@ -23,7 +23,7 @@
 <body>
   <a class="skip-link" href="#view">Skip to content</a>
 
-  <!-- ============ NAVBAR ============ -->
+  <!-- ============ NAVBAR (CHECKLIST 1 - REQUIREMENT 1) ============ -->
   <header class="navbar" id="navbar">
     <div class="navbar-inner">
       <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open filters" aria-controls="sidebar">
@@ -39,25 +39,21 @@
       </a>
 
       <nav class="tabs" id="tabs" aria-label="Main navigation">
-        <button class="tab active" data-tab="cast"><i class="fas fa-users"></i><span>Cast</span></button>
+        <button class="tab active" data-tab="cast"><i class="fas fa-users"></i><span>Cast & Dossiers</span></button>
         <button class="tab" data-tab="episodes"><i class="fas fa-film"></i><span>Episodes</span></button>
         <button class="tab" data-tab="universe"><i class="fas fa-globe"></i><span>Universe</span></button>
-        <button class="tab" data-tab="lab"><i class="fas fa-flask"></i><span>Forensic Lab</span></button>
         <button class="tab" data-tab="saved"><i class="fas fa-bookmark"></i><span>Saved</span><b class="tab-count"
             id="saved-badge">0</b></button>
       </nav>
 
+      <!-- Search Bar (Checklist 2 - Requirement 3) -->
       <div class="search" role="search">
         <i class="fas fa-magnifying-glass"></i>
-        <input type="search" id="search" placeholder="Search characters, actors, episodes…" autocomplete="off"
+        <input type="search" id="search" placeholder="Search characters, actors, villains, episodes…" autocomplete="off"
           aria-label="Search">
         <kbd id="search-kbd">/</kbd>
         <button class="search-clear" id="search-clear" aria-label="Clear search" hidden><i
             class="fas fa-xmark"></i></button>
-      </div>
-
-      <div class="weather-chip" id="weather-chip" title="Live weather at Miami Metro HQ">
-        <i class="fas fa-cloud-sun"></i><span>Miami…</span>
       </div>
     </div>
   </header>
@@ -65,7 +61,7 @@
   <div class="shell">
     <div class="backdrop" id="backdrop"></div>
 
-    <!-- ============ SIDEBAR ============ -->
+    <!-- ============ SIDEBAR (CHECKLIST 1 - REQUIREMENT 2) ============ -->
     <aside class="sidebar" id="sidebar" aria-label="Filters and status">
       <div class="sidebar-head">
         <span>Filters</span>
@@ -76,70 +72,72 @@
         <div class="agent-avatar"><i class="fas fa-user-secret"></i></div>
         <div>
           <strong>Mauricio Prieto</strong>
-          <span>Blood-spatter analyst · MMPD</span>
+          <span>Blood-Spatter Analyst · MMPD</span>
         </div>
       </div>
 
+      <!-- Categories Filter: Miami Metro, Killers & Villains, Family, Others -->
       <section class="side-block" data-tabs="cast saved">
-        <h2><i class="fas fa-layer-group"></i> Category</h2>
+        <h2><i class="fas fa-layer-group"></i> Classification</h2>
         <div class="chips" id="category-filters">
-          <button class="chip active" data-cat="all"><span>All</span><b id="cnt-all">0</b></button>
+          <button class="chip active" data-cat="all"><span>All Records</span><b id="cnt-all">0</b></button>
           <button class="chip" data-cat="police"><span><i class="fas fa-shield-halved"></i> Miami Metro</span><b
               id="cnt-police">0</b></button>
           <button class="chip" data-cat="villain"><span><i class="fas fa-skull"></i> Killers & Villains</span><b
               id="cnt-villain">0</b></button>
-          <button class="chip" data-cat="family"><span><i class="fas fa-heart"></i> Family & Friends</span><b
+          <button class="chip" data-cat="family"><span><i class="fas fa-heart"></i> Family & Allies</span><b
               id="cnt-family">0</b></button>
-          <button class="chip" data-cat="other"><span><i class="fas fa-user"></i> Others</span><b
+          <button class="chip" data-cat="other"><span><i class="fas fa-user-tag"></i> Others & Associates</span><b
               id="cnt-other">0</b></button>
         </div>
       </section>
 
+      <!-- Season Filter -->
       <section class="side-block" data-tabs="episodes">
         <h2><i class="fas fa-tv"></i> Season</h2>
         <div class="chips chips-grid" id="season-filters"></div>
       </section>
 
+      <!-- Sort Options -->
       <section class="side-block" data-tabs="cast episodes">
         <h2><i class="fas fa-arrow-down-wide-short"></i> Sort by</h2>
         <select id="sort" class="select" aria-label="Sort results"></select>
       </section>
 
+      <!-- Single External API Status (TVMaze) -->
       <section class="side-block">
-        <h2><i class="fas fa-satellite-dish"></i> API status</h2>
+        <h2><i class="fas fa-satellite-dish"></i> API Status</h2>
         <ul class="status-list" id="status-list">
-          <li data-api="tvmaze"><i class="dot"></i><span>TVMaze</span><em>…</em></li>
-          <li data-api="wiki"><i class="dot"></i><span>Wikipedia</span><em>…</em></li>
-          <li data-api="meteo"><i class="dot"></i><span>Open-Meteo</span><em>…</em></li>
+          <li data-api="tvmaze" class="loading"><i class="dot"></i><span>TVMaze API</span><em>Connecting…</em></li>
+          <li class="ok"><i class="dot"></i><span>Cataloged Items</span><em id="records-stat">0</em></li>
         </ul>
       </section>
 
-      <button class="btn btn-ghost btn-block" id="reset-btn"><i class="fas fa-rotate-left"></i> Reset all
-        filters</button>
+      <button class="btn btn-ghost btn-block" id="reset-btn"><i class="fas fa-rotate-left"></i> Reset All
+        Filters</button>
     </aside>
 
-    <!-- ============ MAIN CONTAINER ============ -->
+    <!-- ============ MAIN CONTAINER (CHECKLIST 1 - REQUIREMENT 3) ============ -->
     <main class="main" id="main">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-glow"></div>
         <div class="hero-content">
-          <span class="eyebrow"><i class="fas fa-circle"></i> Miami Metro Police Department · Homicide</span>
+          <span class="eyebrow"><i class="fas fa-circle"></i> Miami Metro Police Department · Homicide Division</span>
           <h1 id="hero-title">Inside the mind of <span>Dexter Morgan</span></h1>
-          <p>A live forensic archive of the series: browse every character dossier, rewatch 96 episodes, track the
-            franchise and check the Miami weather — all pulled from public APIs in real time.</p>
+          <p>An interactive case archive of the critically acclaimed thriller: analyze criminal dossiers of iconic villains, browse all 96 episodes, explore spin-offs and maintain your evidence list — powered live by the public TVMaze REST API.</p>
           <div class="hero-stats">
             <div><b data-count="characters">0</b><span>Characters</span></div>
             <div><b data-count="episodes">0</b><span>Episodes</span></div>
             <div><b data-count="seasons">0</b><span>Seasons</span></div>
-            <div><b data-count="rating">–</b><span>Avg. rating</span></div>
+            <div><b data-count="rating">–</b><span>Avg. Rating</span></div>
           </div>
         </div>
       </section>
 
       <div class="toolbar">
         <div class="toolbar-left">
-          <h2 id="view-title">Cast</h2>
-          <span class="pill" id="view-count">…</span>
+          <h2 id="view-title">Cast & Dossiers</h2>
+          <span class="pill" id="view-count">Loading…</span>
         </div>
         <div class="toolbar-right" id="active-filters"></div>
       </div>
@@ -148,7 +146,7 @@
     </main>
   </div>
 
-  <!-- ============ FOOTER ============ -->
+  <!-- ============ FOOTER (CHECKLIST 1 - REQUIREMENT 4) ============ -->
   <footer class="footer">
     <div class="footer-grid">
       <div class="footer-about">
@@ -156,41 +154,39 @@
           <span class="brand-drop"><i class="fas fa-droplet"></i></span>
           <span class="brand-text"><strong>DEXTER</strong><small>Case Files</small></span>
         </div>
-        <p>An interactive single-page app that consumes three public REST APIs to build a practical fan & research
-          portal around the TV series <em>Dexter</em>.</p>
+        <p>An interactive web application consuming the public TVMaze REST API to provide a comprehensive investigation and episode guide for the television series <em>Dexter</em>.</p>
       </div>
       <div>
-        <h3>Data sources</h3>
+        <h3>API Data Source</h3>
         <ul>
-          <li><a href="https://www.tvmaze.com/api" target="_blank" rel="noopener noreferrer">TVMaze API <i
+          <li><a href="https://www.tvmaze.com/api" target="_blank" rel="noopener noreferrer">TVMaze Public REST API <i
                 class="fas fa-arrow-up-right-from-square"></i></a></li>
-          <li><a href="https://en.wikipedia.org/api/rest_v1/" target="_blank" rel="noopener noreferrer">Wikipedia REST
-              API <i class="fas fa-arrow-up-right-from-square"></i></a></li>
-          <li><a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo API <i
-                class="fas fa-arrow-up-right-from-square"></i></a></li>
+          <li><span>Endpoint: /shows/161/cast</span></li>
+          <li><span>Endpoint: /shows/161/episodes</span></li>
+          <li><span>Endpoint: /search/shows?q=</span></li>
         </ul>
       </div>
       <div>
         <h3>Explore</h3>
         <ul>
-          <li><a href="#cast">Cast dossiers</a></li>
-          <li><a href="#episodes">Episode guide</a></li>
-          <li><a href="#universe">Franchise universe</a></li>
-          <li><a href="#lab">Forensic lab</a></li>
+          <li><a href="#cast">Character Dossiers</a></li>
+          <li><a href="#episodes">Episode Guide</a></li>
+          <li><a href="#universe">Franchise Universe</a></li>
+          <li><a href="#saved">Saved Evidence</a></li>
         </ul>
       </div>
       <div>
-        <h3>Author</h3>
+        <h3>Author & Academic Info</h3>
         <ul class="author">
           <li><i class="fas fa-user-graduate"></i> Mauricio Alejandro Prieto Rodríguez</li>
-          <li><i class="fas fa-book"></i> API Consumption · Unit 2</li>
-          <li><i class="fas fa-rocket"></i> Deployed on Vercel</li>
+          <li><i class="fas fa-book"></i> 8vo Cuatrimestre · APIs Unit 1 & 2</li>
+          <li><i class="fas fa-rocket"></i> Deployed on Vercel Cloud</li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 Mauricio Alejandro Prieto Rodríguez. Educational project.</span>
-      <span>Not affiliated with Showtime or Paramount. Data © their respective providers.</span>
+      <span>&copy; 2026 Mauricio Alejandro Prieto Rodríguez · Academic Project</span>
+      <span>Dexter and Miami Metro Police Department are trademarks of Showtime / Paramount. Data via TVMaze API.</span>
     </div>
   </footer>
 
