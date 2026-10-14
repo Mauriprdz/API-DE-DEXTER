@@ -51,7 +51,7 @@ def save_data(data):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# Rutas para el frontend principal (Vercel & Local)
+# Rutas para el frontend principal (Netlify & Local)
 @app.route('/')
 def index():
     if os.path.exists('index.html'):
